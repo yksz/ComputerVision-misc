@@ -39,7 +39,7 @@ int main(int argc, char** argv)
         cvShowImage(kWindowName, image); // ウィンドウに画像を表示する
 
         int key = cvWaitKey(1); // キーが押されるまで待機する
-        if (key == 0x1b) { // Escキー
+        if (key == 'q') {
             break;
         } else if (key == 's') {
             char* filename = "capture.png";
