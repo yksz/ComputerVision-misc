@@ -41,6 +41,11 @@ int main(int argc, char** argv)
         int key = cvWaitKey(1); // キーが押されるまで待機する
         if (key == 0x1b) { // Escキー
             break;
+        } else if (key == 's') {
+            char* filename = "capture.png";
+            printf("Save the capture image: %s\n", filename);
+            //cvSaveImage(filename, image); // OpenCV 1.0
+            cvSaveImage(filename, image, 0); // OpenCV 2.0
         }
     }
 

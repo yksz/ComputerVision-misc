@@ -4,7 +4,7 @@ OBJS := $(subst .c,.o,$(SRCS))
 
 CC = gcc
 CFLAGS = -Wall -std=c99 -I/usr/local/include
-LDFLAGS = -L/usr/local/lib -lopencv_core -lopencv_highgui
+LDFLAGS = -L/usr/local/lib -lopencv_core -lopencv_highgui -lopencv_imgproc
 
 .SUFFIXES: .c .o
 
