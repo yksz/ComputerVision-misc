@@ -7,11 +7,15 @@
 
 namespace {
 
-static const std::string kClickWindowName = "Click image points";
-
-cv::Mat* clickImage = NULL;
+std::string shownWindowName;
+cv::Mat shownImage;
 std::size_t maxClickedCount = 0;
 std::vector<cv::Point2f>* clickedPoints = NULL;
+
+void drawCross(cv::Mat& image, cv::Point2f& point, const cv::Scalar& color, int length, int thickness = 1) {
+    cv::line(image, cv::Point2f(point.x - length, point.y), cv::Point2f(point.x + length, point.y), color, thickness);
+    cv::line(image, cv::Point2f(point.x, point.y - length), cv::Point2f(point.x, point.y + length), color, thickness);
+}
 
 /**
  * ファイルから物体座標空間における物体上の点座標を読み込みます。
@@ -36,15 +40,9 @@ bool readObjectPoints(const std::string& filename,
     return true;
 }
 
-void drawCross(cv::Mat& image, cv::Point2f& point, const cv::Scalar& color, int length, int thickness = 1) {
-    cv::line(image, cv::Point2f(point.x - length, point.y), cv::Point2f(point.x + length, point.y), color, thickness);
-    cv::line(image, cv::Point2f(point.x, point.y - length), cv::Point2f(point.x, point.y + length), color, thickness);
-}
-
 void onMouse(int event, int x, int y, int flags, void* params) {
     switch (event) {
         case cv::EVENT_LBUTTONDOWN:
-            assert(clickImage != NULL);
             assert(clickedPoints != NULL);
 
             if (clickedPoints->size() >= maxClickedCount) {
@@ -53,8 +51,8 @@ void onMouse(int event, int x, int y, int flags, void* params) {
             cv::Point2f point(x, y);
             clickedPoints->push_back(point);
             std::cout << "count=" << clickedPoints->size() << ", clicked=" << point << std::endl;
-            drawCross(*clickImage, point, cv::Scalar(0, 0, 255), 7, 2);
-            cv::imshow(kClickWindowName, *clickImage);
+            drawCross(shownImage, point, cv::Scalar(0, 0, 255), 7, 2);
+            cv::imshow(shownWindowName, shownImage);
             break;
     }
 }
@@ -70,22 +68,20 @@ void onMouse(int event, int x, int y, int flags, void* params) {
 bool readImagePoints(const std::string& filename,
         int numPoints,
         std::vector<cv::Point2f>& imagePoints) {
-    cv::Mat image = cv::imread(filename);
-    if (image.data == NULL) {
+    shownWindowName = filename;
+    shownImage = cv::imread(filename);
+    if (shownImage.data == NULL) {
         std::cerr << "ERROR: Failed to read image" << filename << std::endl;
         return false;
     }
-    clickImage = &image;
     maxClickedCount = numPoints;
     clickedPoints = &imagePoints;
 
-    cv::namedWindow(kClickWindowName, cv::WINDOW_AUTOSIZE);
-    cv::imshow(kClickWindowName, *clickImage);
-    cv::setMouseCallback(kClickWindowName, onMouse);
+    cv::namedWindow(shownWindowName, cv::WINDOW_AUTOSIZE);
+    cv::imshow(shownWindowName, shownImage);
+    cv::setMouseCallback(shownWindowName, onMouse);
     cv::waitKey(0);
 
-    clickImage = NULL;
-    maxClickedCount = 0;
     clickedPoints = NULL;
     return true;
 }
@@ -109,6 +105,24 @@ bool readCameraParameters(const std::string& filename,
     fs["distortion"] >> distortion;
     fs.release();
     return intrinsic.total() != 0 && distortion.total() != 0;
+}
+
+/**
+ * 手動で入力した画像上の対応点と画像に再投影した画像上の対応点を比較します。
+ *
+ * @param[in] points 手動で入力した画像上の対応点
+ * @param[in] reprojectedPoints 再投影した画像上の対応点
+ */
+void evaluateImagePoints(std::vector<cv::Point2f>& points, std::vector<cv::Point2f>& reprojectedPoints) {
+    for (std::vector<cv::Point2f>::iterator it = points.begin(); it != points.end(); it++) {
+        drawCross(shownImage, *it, cv::Scalar(0, 0, 255), 7, 2);
+    }
+    for (std::vector<cv::Point2f>::iterator it = reprojectedPoints.begin(); it != reprojectedPoints.end(); it++) {
+        drawCross(shownImage, *it, cv::Scalar(255, 0, 0), 7, 2);
+    }
+    cv::imshow(shownWindowName, shownImage);
+    cv::waitKey(0);
+    cv::destroyWindow(shownWindowName);
 }
 
 /**
@@ -137,6 +151,7 @@ bool estimateCameraPosition(const std::string& objectPointsFileName,
         std::cerr << "ERROR: Failed to read image points\n";
         return false;
     }
+    std::cout << "imagePoints:\n" << imagePoints << std::endl;
 
     cv::Mat intrinsic, distortion;
     if (!readCameraParameters(cameraParamsFileName, intrinsic, distortion)) {
@@ -145,6 +160,11 @@ bool estimateCameraPosition(const std::string& objectPointsFileName,
     }
 
     cv::solvePnP(objectPoints, imagePoints, intrinsic, distortion, rvec, tvec);
+
+    std::vector<cv::Point2f> reprojectedImagePoints;
+    cv::projectPoints(objectPoints, rvec, tvec, intrinsic, distortion, reprojectedImagePoints);
+    std::cout << "reprojectedImagePoints:\n" << reprojectedImagePoints << std::endl;
+    evaluateImagePoints(imagePoints, reprojectedImagePoints);
     return true;
 }
 
