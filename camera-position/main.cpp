@@ -1,22 +1,13 @@
 #include <cassert>
-#include <cstdio>
-#include <iostream>
 #include <fstream>
+#include <iostream>
 #include <string>
 #include <vector>
 #include <opencv2/opencv.hpp>
-#include <getopt.h>
 
 namespace {
 
-static const int kChessPatternRows = 7;
-static const int kChessPatternColumns = 10;
 static const std::string kClickWindowName = "Click image points";
-
-enum EstimationMode {
-    kDefault,
-    kChessPattern,
-};
 
 cv::Mat* clickImage = NULL;
 std::size_t maxClickedCount = 0;
@@ -45,6 +36,11 @@ bool readObjectPoints(const std::string& filename,
     return true;
 }
 
+void drawCross(cv::Mat& image, cv::Point2f& point, const cv::Scalar& color, int length, int thickness = 1) {
+    cv::line(image, cv::Point2f(point.x - length, point.y), cv::Point2f(point.x + length, point.y), color, thickness);
+    cv::line(image, cv::Point2f(point.x, point.y - length), cv::Point2f(point.x, point.y + length), color, thickness);
+}
+
 void onMouse(int event, int x, int y, int flags, void* params) {
     switch (event) {
         case cv::EVENT_LBUTTONDOWN:
@@ -57,7 +53,7 @@ void onMouse(int event, int x, int y, int flags, void* params) {
             cv::Point2f point(x, y);
             clickedPoints->push_back(point);
             std::cout << "count=" << clickedPoints->size() << ", clicked=" << point << std::endl;
-            cv::circle(*clickImage, point, 5, CV_RGB(255, 0, 0), 3);
+            drawCross(*clickImage, point, cv::Scalar(0, 0, 255), 7, 2);
             cv::imshow(kClickWindowName, *clickImage);
             break;
     }
@@ -95,61 +91,6 @@ bool readImagePoints(const std::string& filename,
 }
 
 /**
- * 画像からチェスボードの内側交点位置を求めます。
- *
- * @param[in] image 画像
- * @param[in] patternSize チェスボードの行と列ごとの内側交点の個数
- * @param[out] corners チェスボードの交点位置
- * @return 求めることができた場合はtrue、そうでなければfalse
- */
-bool findChessboardCorners(cv::Mat& image, cv::Size& patternSize,
-        std::vector<cv::Point2f>& corners) {
-    bool found = cv::findChessboardCorners(image, patternSize, corners);
-    if (!found) {
-        return false;
-    }
-    cv::Mat grayImage(image.rows, image.cols, CV_8UC1);
-    cv::cvtColor(image, grayImage, CV_BGR2GRAY);
-    cv::cornerSubPix(grayImage,
-            corners,
-            cv::Size(3, 3),
-            cv::Size(-1, -1),
-            cv::TermCriteria(CV_TERMCRIT_ITER | CV_TERMCRIT_EPS, 20, 0.03));
-    return true;
-}
-
-/**
- * 画像からチェスボード上の対応点を読み込みます。
- *
- * @param[in] filename 画像ファイル名
- * @param[out] imagePoints 画像上の対応点
- * @return 読み込めた場合はtrue、そうでなければfalse
- */
-bool readImagePointsOnChessboard(const std::string& filename,
-        std::vector<cv::Point2f>& imagePoints) {
-    // チェスボードの交点を検出する
-    cv::Mat image = cv::imread(filename);
-    if (image.data == NULL) {
-        std::cerr << "ERROR: Failed to read image" << filename << std::endl;
-        return false;
-    }
-    cv::Size patternSize(kChessPatternColumns, kChessPatternRows);
-    bool found = findChessboardCorners(image, patternSize, imagePoints);
-    if (!found) {
-        std::cerr << "ERROR: Failed to find chessboard corners\n";
-        return false;
-    }
-
-    // 検出した交点を表示する
-    std::string windowName = "Chessboard Corners";
-    cv::namedWindow(windowName, cv::WINDOW_AUTOSIZE);
-    cv::drawChessboardCorners(image, patternSize, imagePoints, found);
-    cv::imshow(windowName, image);
-    cv::waitKey(0);
-    return true;
-}
-
-/**
  * ファイルからカメラの内部パラメータを読み込みます。
  *
  * @param[in] filename ファイル名
@@ -173,7 +114,6 @@ bool readCameraParameters(const std::string& filename,
 /**
  * 物体座標空間におけるカメラ位置を推定します。
  *
- * @param[in] estimationMode 推定処理のモード
  * @param[in] objectPointsFileName 物体上の点座標が書かれたファイル名
  * @param[in] imageFileName 対応する物体が写っている画像ファイル名
  * @param[in] cameraParamsFileName カメラの内部パラメータが書かれたファイル名
@@ -181,8 +121,7 @@ bool readCameraParameters(const std::string& filename,
  * @param[out] tvec カメラの並進ベクトル
  * @return 推定できた場合はtrue、そうでなければfalse
  */
-bool estimateCameraPosition(EstimationMode estimationMode,
-        const std::string& objectPointsFileName,
+bool estimateCameraPosition(const std::string& objectPointsFileName,
         const std::string& imageFileName,
         const std::string& cameraParamsFileName,
         cv::Mat& rvec,
@@ -194,20 +133,7 @@ bool estimateCameraPosition(EstimationMode estimationMode,
     }
 
     std::vector<cv::Point2f> imagePoints;
-    bool result = false;
-    switch (estimationMode) {
-        case kChessPattern:
-            result = readImagePointsOnChessboard(imageFileName, imagePoints);
-            break;
-
-        case kDefault:
-            result = readImagePoints(imageFileName, objectPoints.size(), imagePoints);
-            break;
-
-        default:
-            assert(false && "Unknown mode");
-    }
-    if (!result) {
+    if (!readImagePoints(imageFileName, objectPoints.size(), imagePoints)) {
         std::cerr << "ERROR: Failed to read image points\n";
         return false;
     }
@@ -226,30 +152,19 @@ bool estimateCameraPosition(EstimationMode estimationMode,
 
 int main(int argc, char** argv) {
     std::string mode;
-    int opt;
-    while ((opt = getopt(argc, argv, "m:")) != -1) {
-        switch (opt) {
-            case 'm':
-                mode = std::string(optarg);
-                break;
-        }
-    }
-    if (argc - optind < 3) {
+    if (argc < 3) {
         std::cerr << "usage: "
                 << argv[0]
-                << " [options]"
-                " <object points file> <image file> <camera parameters file>\n"
-                " -m\tmode ('chess' or default)"
+                << " <object points file> <image file> <camera parameters file>"
                 << std::endl;
         return 1;
     }
-    EstimationMode estimationMode = mode == "chess" ? kChessPattern : kDefault;
-    std::string objectPointsFileName(argv[optind + 0]);
-    std::string imageFileName(argv[optind + 1]);
-    std::string cameraParamsFileName(argv[optind + 2]);
+    std::string objectPointsFileName(argv[1]);
+    std::string imageFileName(argv[2]);
+    std::string cameraParamsFileName(argv[3]);
 
     cv::Mat rvec, tvec;
-    bool result = estimateCameraPosition(estimationMode,
+    bool result = estimateCameraPosition(
             objectPointsFileName,
             imageFileName,
             cameraParamsFileName,
