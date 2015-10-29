@@ -94,7 +94,7 @@ bool readCameraParameters(const std::string& filename,
         cv::Mat& intrinsic, cv::Mat& distortion) {
     cv::FileStorage fs(filename, cv::FileStorage::READ);
     if (!fs.isOpened()) {
-        std::cerr << "ERROR: Failed to open the file: " << filename << std::endl;
+        std::cerr << "ERROR: Failed to open file: " << filename << std::endl;
         return false;
     }
     fs["intrinsic"] >> intrinsic;
@@ -134,6 +134,26 @@ bool estimateCameraPosition(const std::string& imageFileName,
     return true;
 }
 
+/**
+ * ファイルにカメラ位置を書き込みます。
+ *
+ * @param[in] filename ファイル名
+ * @param[in] rvec カメラの回転ベクトル
+ * @param[in] tvec カメラの並進ベクトル
+ * @return 書き込めた場合はtrue、そうでなければfalse
+ */
+bool writeCameraPosition(const std::string& filename,
+        cv::Mat& rvec, cv::Mat& tvec) {
+    cv::FileStorage fs(filename, cv::FileStorage::WRITE);
+    if (!fs.isOpened()) {
+        std::cerr << "ERROR: Failed to open file: " << filename << std::endl;
+        return false;
+    }
+    fs << "rotation" << rvec;
+    fs << "translation" << tvec;
+    return true;
+}
+
 } // unnamed namespace
 
 int main(int argc, char** argv) {
@@ -151,5 +171,10 @@ int main(int argc, char** argv) {
     bool result = estimateCameraPosition(imageFileName, cameraParamsFileName, rvec, tvec);
     std::cout << "rvec:\n" << rvec << std::endl;
     std::cout << "tvec:\n" << tvec << std::endl;
+
+    std::string cameraPositionFileName = "campos.xml";
+    if (writeCameraPosition(cameraPositionFileName, rvec, tvec)) {
+        std::cout << "Write the camera position to " << cameraPositionFileName << std::endl;
+    }
     return result;
 }

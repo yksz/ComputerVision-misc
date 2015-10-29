@@ -82,6 +82,7 @@ bool readImagePoints(const std::string& filename,
     cv::setMouseCallback(shownWindowName, onMouse);
     cv::waitKey(0);
 
+    std::cout << "\nclickedImagePoints:\n" << imagePoints << std::endl;
     clickedPoints = NULL;
     return true;
 }
@@ -98,7 +99,7 @@ bool readCameraParameters(const std::string& filename,
         cv::Mat& intrinsic, cv::Mat& distortion) {
     cv::FileStorage fs(filename, cv::FileStorage::READ);
     if (!fs.isOpened()) {
-        std::cerr << "ERROR: Failed to open the file: " << filename << std::endl;
+        std::cerr << "ERROR: Failed to open file: " << filename << std::endl;
         return false;
     }
     fs["intrinsic"] >> intrinsic;
@@ -123,6 +124,8 @@ void evaluateImagePoints(std::vector<cv::Point2f>& points, std::vector<cv::Point
     cv::imshow(shownWindowName, shownImage);
     cv::waitKey(0);
     cv::destroyWindow(shownWindowName);
+
+    std::cout << "reprojectedImagePoints:\n" << reprojectedPoints << "\n\n";
 }
 
 /**
@@ -151,7 +154,6 @@ bool estimateCameraPosition(const std::string& objectPointsFileName,
         std::cerr << "ERROR: Failed to read image points\n";
         return false;
     }
-    std::cout << "imagePoints:\n" << imagePoints << std::endl;
 
     cv::Mat intrinsic, distortion;
     if (!readCameraParameters(cameraParamsFileName, intrinsic, distortion)) {
@@ -163,8 +165,27 @@ bool estimateCameraPosition(const std::string& objectPointsFileName,
 
     std::vector<cv::Point2f> reprojectedImagePoints;
     cv::projectPoints(objectPoints, rvec, tvec, intrinsic, distortion, reprojectedImagePoints);
-    std::cout << "reprojectedImagePoints:\n" << reprojectedImagePoints << std::endl;
     evaluateImagePoints(imagePoints, reprojectedImagePoints);
+    return true;
+}
+
+/**
+ * ファイルにカメラ位置を書き込みます。
+ *
+ * @param[in] filename ファイル名
+ * @param[in] rvec カメラの回転ベクトル
+ * @param[in] tvec カメラの並進ベクトル
+ * @return 書き込めた場合はtrue、そうでなければfalse
+ */
+bool writeCameraPosition(const std::string& filename,
+        cv::Mat& rvec, cv::Mat& tvec) {
+    cv::FileStorage fs(filename, cv::FileStorage::WRITE);
+    if (!fs.isOpened()) {
+        std::cerr << "ERROR: Failed to open file: " << filename << std::endl;
+        return false;
+    }
+    fs << "rotation" << rvec;
+    fs << "translation" << tvec;
     return true;
 }
 
@@ -191,5 +212,10 @@ int main(int argc, char** argv) {
             rvec, tvec);
     std::cout << "rvec:\n" << rvec << std::endl;
     std::cout << "tvec:\n" << tvec << std::endl;
+
+    std::string cameraPositionFileName = "campos.xml";
+    if (writeCameraPosition(cameraPositionFileName, rvec, tvec)) {
+        std::cout << "Write the camera position to " << cameraPositionFileName << std::endl;
+    }
     return result;
 }
