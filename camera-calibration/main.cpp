@@ -1,5 +1,4 @@
-#include <cstdio>
-#include <cstdlib>
+#include <iostream>
 #include <string>
 #include <opencv2/opencv.hpp>
 
@@ -121,7 +120,7 @@ bool calibrateCamera(const std::string& imageDirName, int numImages,
     std::vector<std::vector<cv::Point3f> > objectPointsList;
     std::vector<cv::Point3f> objectPoints;
     readObjectPoints(objectPoints);
-    for (size_t i = 0; i < imagePointsList.size(); i++) {
+    for (std::size_t i = 0; i < imagePointsList.size(); i++) {
         objectPointsList.push_back(objectPoints);
     }
 
@@ -131,15 +130,18 @@ bool calibrateCamera(const std::string& imageDirName, int numImages,
 }
 
 /**
- * ファイルにカメラパラメータを書き込みます。
+ * ファイルにカメラ情報を書き込みます。
  *
  * @param[in] filename ファイル名
- * @param[out] intrinsic カメラの内部パラメータ行列
- * @param[out] distortion 歪み係数ベクトル
+ * @param[in] intrinsic カメラの内部パラメータ行列
+ * @param[in] distortion 歪み係数ベクトル
+ * @param[in] rvec カメラの回転ベクトル
+ * @param[in] tvec カメラの並進ベクトル
  * @return 書き込めた場合はtrue、そうでなければfalse
  */
-bool writeCameraParameters(const std::string& filename,
-        cv::Mat& intrinsic, cv::Mat& distortion) {
+bool writeCameraInfo(const std::string& filename,
+        cv::Mat& intrinsic, cv::Mat& distortion,
+        cv::Mat& rvec, cv::Mat& tvec) {
     cv::FileStorage fs(filename, cv::FileStorage::WRITE);
     if (!fs.isOpened()) {
         std::cerr << "ERROR: Failed to open the file: " << filename << std::endl;
@@ -147,6 +149,9 @@ bool writeCameraParameters(const std::string& filename,
     }
     fs << "intrinsic" << intrinsic;
     fs << "distortion" << distortion;
+    fs << "rotation" << rvec;
+    fs << "translation" << tvec;
+    fs.release();
     return true;
 }
 
@@ -160,7 +165,7 @@ int main(int argc, char* argv[]) {
                 << std::endl;
         return 1;
     }
-    std::string imageDirName(argv[1]);
+    const std::string imageDirName(argv[1]);
     int numImages = kDefaultNumImages;
     if (argc > 2) {
         int num = atoi(argv[2]);
@@ -181,9 +186,10 @@ int main(int argc, char* argv[]) {
     std::cout << "rvec:\n" << rvecs[0] << std::endl;
     std::cout << "tvec:\n" << tvecs[0] << std::endl;
 
-    const std::string cameraParamsFileName = "camparams.xml";
-    if (writeCameraParameters(cameraParamsFileName, intrinsic, distortion)) {
-        std::cout << "Write the camera parameters to " << cameraParamsFileName << std::endl;
+    const std::string cameraInfoFileName = "camera.xml";
+    if (writeCameraInfo(cameraInfoFileName,
+                intrinsic, distortion, rvecs[0], tvecs[0])) {
+        std::cout << "Write the camera info to " << cameraInfoFileName << std::endl;
     }
     return 0;
 }
