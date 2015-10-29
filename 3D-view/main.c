@@ -181,11 +181,11 @@ static void keyboard(unsigned char key, int x, int y)
     LOGGER_DEBUG("key=%c, x=%4d, y=%4d\n", key, x, y);
 
     switch (key) {
-        case 0x1b: // Esc
+        case 'q':
             exit(EXIT_SUCCESS);
             break;
 
-        case ' ': // Space
+        case ' ':
             glutFullScreen();
             break;
     }
