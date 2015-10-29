@@ -168,13 +168,16 @@ int main(int argc, char** argv) {
     std::string cameraParamsFileName(argv[2]);
 
     cv::Mat rvec, tvec;
-    bool result = estimateCameraPosition(imageFileName, cameraParamsFileName, rvec, tvec);
+    if (!estimateCameraPosition(imageFileName, cameraParamsFileName, rvec, tvec)) {
+        std::cerr << "ERROR: Failed to estimate camera position" << std::endl;
+        return 1;
+    }
     std::cout << "rvec:\n" << rvec << std::endl;
     std::cout << "tvec:\n" << tvec << std::endl;
 
-    std::string cameraPositionFileName = "campos.xml";
+    const std::string cameraPositionFileName = "campos.xml";
     if (writeCameraPosition(cameraPositionFileName, rvec, tvec)) {
         std::cout << "Write the camera position to " << cameraPositionFileName << std::endl;
     }
-    return result;
+    return 0;
 }

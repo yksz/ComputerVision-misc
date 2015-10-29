@@ -81,6 +81,9 @@ bool readImagePoints(const std::string& filename,
     cv::imshow(shownWindowName, shownImage);
     cv::setMouseCallback(shownWindowName, onMouse);
     cv::waitKey(0);
+    if (clickedPoints->size() < maxClickedCount) {
+        return false;
+    }
 
     std::cout << "\nclickedImagePoints:\n" << imagePoints << std::endl;
     clickedPoints = NULL;
@@ -192,7 +195,6 @@ bool writeCameraPosition(const std::string& filename,
 } // unnamed namespace
 
 int main(int argc, char** argv) {
-    std::string mode;
     if (argc < 3) {
         std::cerr << "usage: "
                 << argv[0]
@@ -205,17 +207,17 @@ int main(int argc, char** argv) {
     std::string cameraParamsFileName(argv[3]);
 
     cv::Mat rvec, tvec;
-    bool result = estimateCameraPosition(
-            objectPointsFileName,
-            imageFileName,
-            cameraParamsFileName,
-            rvec, tvec);
+    if(!estimateCameraPosition(objectPointsFileName, imageFileName, cameraParamsFileName,
+            rvec, tvec)) {
+        std::cerr << "ERROR: Failed to estimate camera position" << std::endl;
+        return 1;
+    }
     std::cout << "rvec:\n" << rvec << std::endl;
     std::cout << "tvec:\n" << tvec << std::endl;
 
-    std::string cameraPositionFileName = "campos.xml";
+    const std::string cameraPositionFileName = "campos.xml";
     if (writeCameraPosition(cameraPositionFileName, rvec, tvec)) {
         std::cout << "Write the camera position to " << cameraPositionFileName << std::endl;
     }
-    return result;
+    return 0;
 }
