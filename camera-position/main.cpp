@@ -91,7 +91,7 @@ bool readImagePoints(const std::string& filename,
 }
 
 /**
- * ファイルからカメラの内部パラメータを読み込みます。
+ * ファイルからカメラパラメータを読み込みます。
  *
  * @param[in] filename ファイル名
  * @param[out] intrinsic カメラの内部パラメータ行列
@@ -202,9 +202,9 @@ int main(int argc, char** argv) {
                 << std::endl;
         return 1;
     }
-    std::string objectPointsFileName(argv[1]);
-    std::string imageFileName(argv[2]);
-    std::string cameraParamsFileName(argv[3]);
+    const std::string objectPointsFileName(argv[1]);
+    const std::string imageFileName(argv[2]);
+    const std::string cameraParamsFileName(argv[3]);
 
     cv::Mat rvec, tvec;
     if(!estimateCameraPosition(objectPointsFileName, imageFileName, cameraParamsFileName,
@@ -215,7 +215,7 @@ int main(int argc, char** argv) {
     std::cout << "rvec:\n" << rvec << std::endl;
     std::cout << "tvec:\n" << tvec << std::endl;
 
-    const std::string cameraPositionFileName = "campos.xml";
+    const std::string cameraPositionFileName = "camera_position.xml";
     if (writeCameraPosition(cameraPositionFileName, rvec, tvec)) {
         std::cout << "Write the camera position to " << cameraPositionFileName << std::endl;
     }

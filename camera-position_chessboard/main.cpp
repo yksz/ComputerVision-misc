@@ -1,4 +1,3 @@
-#include <fstream>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -83,7 +82,7 @@ bool readImagePointsOnChessboard(const std::string& filename,
 }
 
 /**
- * ファイルからカメラの内部パラメータを読み込みます。
+ * ファイルからカメラパラメータを読み込みます。
  *
  * @param[in] filename ファイル名
  * @param[out] intrinsic カメラの内部パラメータ行列
@@ -164,8 +163,8 @@ int main(int argc, char** argv) {
                 << std::endl;
         return 1;
     }
-    std::string imageFileName(argv[1]);
-    std::string cameraParamsFileName(argv[2]);
+    const std::string imageFileName(argv[1]);
+    const std::string cameraParamsFileName(argv[2]);
 
     cv::Mat rvec, tvec;
     if (!estimateCameraPosition(imageFileName, cameraParamsFileName, rvec, tvec)) {
@@ -175,7 +174,7 @@ int main(int argc, char** argv) {
     std::cout << "rvec:\n" << rvec << std::endl;
     std::cout << "tvec:\n" << tvec << std::endl;
 
-    const std::string cameraPositionFileName = "campos.xml";
+    const std::string cameraPositionFileName = "camera_position.xml";
     if (writeCameraPosition(cameraPositionFileName, rvec, tvec)) {
         std::cout << "Write the camera position to " << cameraPositionFileName << std::endl;
     }
