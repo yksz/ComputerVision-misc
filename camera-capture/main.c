@@ -43,7 +43,7 @@ int main(int argc, char** argv)
             break;
         } else if (key == 's') {
             char* filename = "capture.png";
-            printf("Save the capture image: %s\n", filename);
+            printf("Save a capture image: %s\n", filename);
             //cvSaveImage(filename, image); // OpenCV 1.0
             cvSaveImage(filename, image, 0); // OpenCV 2.0
         }
