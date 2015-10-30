@@ -4,7 +4,13 @@ OBJS := $(subst .c,.o,$(SRCS))
 
 CC = gcc
 CFLAGS = -Wall -std=c99
-LDFLAGS = -framework OpenGL -framework GLUT -framework Foundation
+UNAME := $(shell uname)
+ifeq ($(UNAME),Linux)
+    LDFLAGS = -lGL -lGLU -lglut -lm
+endif
+ifeq ($(UNAME),Darwin)
+    LDFLAGS = -framework OpenGL -framework GLUT -framework Foundation
+endif
 
 .SUFFIXES: .c .o
 
