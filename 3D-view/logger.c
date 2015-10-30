@@ -13,7 +13,6 @@ void logger_write(LogLevel level, FILE* fp, const char* file, int line, const ch
 
     time_t timer = time(NULL);
     char time[20];
-    tzset();
     strftime(time, sizeof(time), "%Y/%m/%d %H:%M:%S", localtime(&timer));
 
     switch (level) {

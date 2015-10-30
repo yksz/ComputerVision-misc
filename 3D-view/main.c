@@ -1,11 +1,14 @@
 #include <math.h>
 #include <stdbool.h>
 #include <stdlib.h>
-#include <GLUT/glut.h>
+#include <GL/glut.h>
 #include "logger.h"
 
+#define M_PI 3.14159265358979323846
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
+
+#define PERSPECTIVE_ENABLED
 
 typedef struct
 {
@@ -84,7 +87,7 @@ static void setMaterial(Material* m)
     glMaterialfv(GL_FRONT, GL_SHININESS, m->shininess);
 }
 
-static void configureView(int width, int height, bool isPerspectiveEnabled)
+static void setUpView(int width, int height)
 {
     glViewport(0, 0, width, height); // ビューポートの設定
 
@@ -92,15 +95,15 @@ static void configureView(int width, int height, bool isPerspectiveEnabled)
     glLoadIdentity(); // 変換行列を単位行列に初期化する
     double near = 1.0;    // 前方クリップ面と視点間の距離
     double far  = 1000.0; // 後方クリップ面と視点間の距離
-    if (isPerspectiveEnabled) {
-        // 透視投影
-        gluPerspective(60.0, // x-z平面の視野角
-                       (double) width / (double) height, // 視野角の縦横比
-                       near, far);
-    } else {
-        // 正射影
-        glOrtho(-0.2 * width, 0.2 * width, -0.2 * height, 0.2 * height, near, far);
-    }
+#ifdef PERSPECTIVE_ENABLED
+    // 透視投影
+    gluPerspective(60.0, // x-z平面の視野角
+            (double) width / (double) height, // 視野角の縦横比
+            near, far);
+#else
+    // 正射影
+    glOrtho(-0.2 * width, 0.2 * width, -0.2 * height, 0.2 * height, near, far);
+#endif
 }
 
 static void rotate(Viewpoint* v, double theta, double phi)
@@ -173,7 +176,7 @@ static void reshape(int width, int height)
 {
     LOGGER_DEBUG("width=%4d, height=%4d\n", width, height);
 
-    configureView(width, height, true);
+    setUpView(width, height);
 }
 
 static void keyboard(unsigned char key, int x, int y)
@@ -223,8 +226,8 @@ static void motion(int x, int y)
     double rotateRate = 0.5;
     double zoomRate = 0.01;
     if (leftButton.isDown) {
-        double theta = rotateRate * (leftButton.x - x) * M_PI/180.0;
-        double phi   = rotateRate * (y - leftButton.y) * M_PI/180.0;
+        double theta = rotateRate * (leftButton.x - x) * M_PI / 180.0;
+        double phi   = rotateRate * (y - leftButton.y) * M_PI / 180.0;
         rotate(&viewpoint, theta, phi);
         leftButton.x = x;
         leftButton.y = y;
