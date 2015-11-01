@@ -195,7 +195,7 @@ bool writeCameraPosition(const std::string& filename,
 } // unnamed namespace
 
 int main(int argc, char** argv) {
-    if (argc < 3) {
+    if (argc <= 3) {
         std::cerr << "usage: "
                 << argv[0]
                 << " <object points file> <image file> <camera parameters file>"
