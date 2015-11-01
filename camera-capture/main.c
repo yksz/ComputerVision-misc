@@ -3,12 +3,21 @@
 #include <opencv/highgui.h>
 
 static const char* kWindowName = "Capture";
-static const double kWidth = 640;
-static const double kHeight = 480;
+static const double kDefaultWidth = 640;
+static const double kDefaultHeight = 480;
 static const int kMessageSize = 64;
 
 int main(int argc, char** argv)
 {
+    int width = kDefaultWidth;
+    int height = kDefaultHeight;
+    if (argc > 2) {
+        int w = atoi(argv[1]);
+        width = w ? w : width;
+        int h = atoi(argv[2]);
+        height = h ? h : height;
+    }
+
     // カメラからのビデオキャプチャを初期化する
     CvCapture* capture = cvCaptureFromCAM(CV_CAP_ANY);
     if (capture == NULL) {
@@ -17,8 +26,8 @@ int main(int argc, char** argv)
     }
 
     // キャプチャサイズを設定する
-    cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, kWidth);
-    cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, kHeight);
+    cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, width);
+    cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, height);
 
     // ウィンドウを作成する
     cvNamedWindow(kWindowName, CV_WINDOW_AUTOSIZE);
