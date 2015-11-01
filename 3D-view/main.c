@@ -1,12 +1,18 @@
 #include <math.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#if defined(__APPLE__) && defined(__MACH__)
+#include <GLUT/glut.h>
+#else
 #include <GL/glut.h>
+#endif // __APPLE__ && __MACH__
 #include "logger.h"
 
 #define PERSPECTIVE_ENABLED
 
+#ifndef M_PI
 #define M_PI 3.14159265358979323846
+#endif // M_PI
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 
@@ -103,7 +109,7 @@ static void setUpView(int width, int height)
 #else
     // 正射影
     glOrtho(-0.2 * width, 0.2 * width, -0.2 * height, 0.2 * height, near, far);
-#endif
+#endif // PERSPECTIVE_ENABLED
 }
 
 static void rotate(Viewpoint* v, double theta, double phi)
