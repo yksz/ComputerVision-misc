@@ -13,20 +13,21 @@ typedef enum {
     Mode_CAPTURE, Mode_MASK, Mode_INVISIBLE
 } Mode;
 
-static CvCapture* capture;
+static CvCapture* capture = NULL;
+static IplImage* fileImage = NULL;
 
-static IplImage* detectSkinColor(IplImage* img)
+static IplImage* detectSkinColor(IplImage* src)
 {
-    assert(img != NULL);
+    assert(src != NULL);
 
-    cvCvtColor(img, img, CV_BGR2HSV);
+    cvCvtColor(src, src, CV_BGR2HSV);
 
-    IplImage* mask = cvCreateImage(cvGetSize(img), IPL_DEPTH_8U, 1);
-    for (int y = 0; y < img->height; y++) {
-        for (int x = 0; x < img->width; x++){
-            int h = img->imageData[img->widthStep * y + x * 3 + 0];
-            int s = img->imageData[img->widthStep * y + x * 3 + 1];
-            int v = img->imageData[img->widthStep * y + x * 3 + 2];
+    IplImage* mask = cvCreateImage(cvGetSize(src), IPL_DEPTH_8U, 1);
+    for (int y = 0; y < src->height; y++) {
+        for (int x = 0; x < src->width; x++){
+            int h = src->imageData[src->widthStep * y + x * 3 + 0];
+            int s = src->imageData[src->widthStep * y + x * 3 + 1];
+            int v = src->imageData[src->widthStep * y + x * 3 + 2];
             if (h > 3 && h < 23) { // skin color detected
                 mask->imageData[mask->widthStep * y + x] = 255;
             } else {
@@ -38,27 +39,28 @@ static IplImage* detectSkinColor(IplImage* img)
     cvErode(mask, mask, NULL, 3);
     cvDilate(mask, mask, NULL, 1);
 
-    cvCvtColor(img, img, CV_HSV2BGR);
+    cvCvtColor(src, src, CV_HSV2BGR);
     return mask;
 }
 
-static void renderInvisible(IplImage* img, IplImage* bg)
+static IplImage* renderInvisible(IplImage* src, IplImage* bg)
 {
-    assert(img != NULL);
+    assert(src != NULL);
     assert(bg != NULL);
 
-    IplImage* mask = detectSkinColor(img);
-    for (int y = 0; y < img->height; y++) {
-        for (int x = 0; x < img->width; x++) {
+    IplImage* dst = cvCloneImage(src);
+    IplImage* mask = detectSkinColor(dst);
+    for (int y = 0; y < dst->height; y++) {
+        for (int x = 0; x < dst->width; x++) {
             if (mask->imageData[mask->widthStep * y + x] != 0) {
-                img->imageData[img->widthStep * y + x * 3 + 0] = bg->imageData[bg->widthStep * y + x * 3 + 0];
-                img->imageData[img->widthStep * y + x * 3 + 1] = bg->imageData[bg->widthStep * y + x * 3 + 1];
-                img->imageData[img->widthStep * y + x * 3 + 2] = bg->imageData[bg->widthStep * y + x * 3 + 2];
+                dst->imageData[dst->widthStep * y + x * 3 + 0] = bg->imageData[bg->widthStep * y + x * 3 + 0];
+                dst->imageData[dst->widthStep * y + x * 3 + 1] = bg->imageData[bg->widthStep * y + x * 3 + 1];
+                dst->imageData[dst->widthStep * y + x * 3 + 2] = bg->imageData[bg->widthStep * y + x * 3 + 2];
             }
         }
     }
-    cvShowImage(kWindowName, img);
     cvReleaseImage(&mask);
+    return dst;
 }
 
 static IplImage* loadImage(const char* filename)
@@ -81,17 +83,17 @@ static IplImage* releaseImage(IplImage* img)
     return NULL;
 }
 
-static IplImage* getImage(const char* filename)
+static IplImage* getImage()
 {
     if (capture != NULL) {
         return cvQueryFrame(capture);
-    } else if (filename != NULL) {
-        return loadImage(filename);
+    } else if (fileImage != NULL) {
+        return fileImage;
     } else {
         capture = cvCaptureFromCAM(CV_CAP_ANY);
         if (capture == NULL) {
             fprintf(stderr, "ERROR: Camera not found\n");
-            return false;
+            return NULL;
         }
         cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, kWidth);
         cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, kHeight);
@@ -101,30 +103,29 @@ static IplImage* getImage(const char* filename)
 
 int main(int argc, char** argv)
 {
-    char* testImageFileName = NULL;
     if (argc > 1) {
-        testImageFileName = argv[1];
+        fileImage = loadImage(argv[1]);
     }
+    IplImage* background = NULL;
 
     Mode mode = Mode_CAPTURE;
-    IplImage* background = NULL;
     while (1) {
-        IplImage* image = getImage(testImageFileName);
+        IplImage* image = getImage();
         if (image == NULL) {
             return 1;
         }
 
-        switch (mode) {
-            case Mode_CAPTURE:
-                break;
-            case Mode_MASK:
-                image = detectSkinColor(image);
-                break;
-            case Mode_INVISIBLE:
-                renderInvisible(image, background);
-                break;
+        if (mode == Mode_MASK) {
+            IplImage* mask = detectSkinColor(image);
+            cvShowImage(kWindowName, mask);
+            releaseImage(mask);
+        } else if (mode == Mode_INVISIBLE) {
+            IplImage* invisible = renderInvisible(image, background);
+            cvShowImage(kWindowName, invisible);
+            releaseImage(invisible);
+        } else {
+            cvShowImage(kWindowName, image);
         }
-        cvShowImage(kWindowName, image);
 
         int key = cvWaitKey(1);
         if (key == 'q') {
@@ -137,6 +138,7 @@ int main(int argc, char** argv)
             background = releaseImage(background);
         } else if (key == 'm') {
             mode = Mode_MASK;
+            background = releaseImage(background);
         } else if (key == 'i') {
             mode = Mode_INVISIBLE;
             releaseImage(background);
