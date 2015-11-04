@@ -13,8 +13,6 @@
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif // M_PI
-#define MAX(a, b) ((a) > (b) ? (a) : (b))
-#define MIN(a, b) ((a) < (b) ? (a) : (b))
 
 typedef struct
 {
@@ -42,7 +40,7 @@ typedef struct
 
 typedef struct
 {
-    bool isDown;
+    bool pressed;
     int x, y;
 } MouseButton;
 
@@ -51,7 +49,6 @@ static Viewpoint viewpoint = {
     .cx =   0.0, .cy =   0.0, .cz =   0.0,
     .ux =   0.0, .uy =   1.0, .uz =   0.0,
 };
-
 static Light light0 = {
     .position  = { 50.0f, 100.0f, 50.0f, 1.0f },
     .ambient   = {  0.2f,   0.2f,  0.2f, 1.0f },
@@ -59,14 +56,12 @@ static Light light0 = {
     .specular  = {  1.0f,   1.0f,  1.0f, 1.0f },
     .direction = { -0.5f,  -1.0f, -0.5f },
 };
-
 static Material material = {
     .ambient   = {  0.2f, 0.2f, 0.2f, 1.0 },
     .diffuse   = {  1.0f, 0.0f, 0.0f, 1.0 },
     .specular  = {  1.0f, 1.0f, 1.0f, 1.0 },
     .shininess = { 30.0f },
 };
-
 static MouseButton leftButton, rightButton;
 
 static void setViewpoint(Viewpoint* v)
@@ -95,16 +90,17 @@ static void setMaterial(Material* m)
 
 static void setUpView(int width, int height)
 {
-    glViewport(0, 0, width, height); // ビューポートの設定
-
     glMatrixMode(GL_PROJECTION); // 現在の行列を射影変換行列に変更する
     glLoadIdentity(); // 変換行列を単位行列に初期化する
-    double near = 1.0;    // 前方クリップ面と視点間の距離
-    double far  = 1000.0; // 後方クリップ面と視点間の距離
+
+    glViewport(0, 0, width, height); // ビューポートの設定
+
+    const double near = 1.0;    // 前方クリップ面と視点間の距離
+    const double far  = 1000.0; // 後方クリップ面と視点間の距離
 #ifdef PERSPECTIVE_ENABLED
     // 透視投影
     gluPerspective(60.0, // x-z平面の視野角
-            (double) width / (double) height, // 視野角の縦横比
+            (double) width / height, // 視野角の縦横比
             near, far);
 #else
     // 正射影
@@ -120,7 +116,7 @@ static void rotate(Viewpoint* v, double theta, double phi)
     double d = sqrt(x * x + y * y + z * z);
     theta += atan2(x, z);
     phi   += asin(y / d);
-    phi = MAX(MIN(phi, M_PI * 0.5), -M_PI * 0.5); // -PI/2 <= phi <= +PI/2
+    phi = fmax(fmin(phi, M_PI * 0.5), -M_PI * 0.5); // -PI/2 <= phi <= +PI/2
     v->ex = d * sin(theta) * cos(phi) + v->cx;
     v->ey = d * sin(phi)              + v->cy;
     v->ez = d * cos(theta) * cos(phi) + v->cz;
@@ -134,7 +130,7 @@ static void zoom(Viewpoint* v, double magnification)
     v->ez = rate * (v->ez - v->cz) + v->cz;
 }
 
-static void drawAxis(int len)
+static void drawAxes(int len)
 {
     glBegin(GL_LINES);
 
@@ -156,26 +152,26 @@ static void drawAxis(int len)
     glEnd();
 }
 
+static void idle(void)
+{
+    glutPostRedisplay();
+}
+
 static void display(void)
 {
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // バッファをクリア
-
     glMatrixMode(GL_MODELVIEW); // 現在の行列をモデルビュー変換行列に変更する
     glLoadIdentity(); // 変換行列を単位行列に初期化する
+
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // バッファをクリア
 
     setViewpoint(&viewpoint);
     setLight0(&light0);
     setMaterial(&material);
 
-    drawAxis(100);
+    drawAxes(100);
     glutSolidTeapot(50);
 
     glutSwapBuffers(); // ダブルバッファリングのためのバッファの交換
-}
-
-static void idle(void)
-{
-    glutPostRedisplay();
 }
 
 static void reshape(int width, int height)
@@ -205,18 +201,19 @@ static void mouse(int button, int state, int x, int y)
 {
     LOGGER_DEBUG("button=%d, state=%d, x=%d, y=%d\n", button, state, x, y);
 
+    leftButton.pressed = false;
+    rightButton.pressed = false;
+
     if (state == GLUT_DOWN) {
         switch (button) {
             case GLUT_LEFT_BUTTON:
-                leftButton.isDown = true;
-                rightButton.isDown = false;
+                leftButton.pressed = true;
                 leftButton.x = x;
                 leftButton.y = y;
                 break;
 
             case GLUT_RIGHT_BUTTON:
-                leftButton.isDown = false;
-                rightButton.isDown = true;
+                rightButton.pressed = true;
                 rightButton.x = x;
                 rightButton.y = y;
                 break;
@@ -229,15 +226,15 @@ static void motion(int x, int y)
 {
     LOGGER_DEBUG("x=%d, y=%d\n", x, y);
 
-    double rotateRate = 0.5;
-    double zoomRate = 0.01;
-    if (leftButton.isDown) {
+    if (leftButton.pressed) {
+        const double rotateRate = 0.5;
         double theta = rotateRate * (leftButton.x - x) * M_PI / 180.0;
         double phi   = rotateRate * (y - leftButton.y) * M_PI / 180.0;
         rotate(&viewpoint, theta, phi);
         leftButton.x = x;
         leftButton.y = y;
-    } else if (rightButton.isDown) {
+    } else if (rightButton.pressed) {
+        const double zoomRate = 0.01;
         double magnification = 1 + zoomRate * (rightButton.y - y);
         zoom(&viewpoint, magnification);
         rightButton.x = x;
@@ -267,8 +264,8 @@ int main(int argc, char** argv)
     glutInitWindowSize(512, 512);
     glutCreateWindow(argv[0]);
 
-    glutDisplayFunc(display);
     glutIdleFunc(idle);
+    glutDisplayFunc(display);
     glutReshapeFunc(reshape);
     glutKeyboardFunc(keyboard);
     glutMouseFunc(mouse);
