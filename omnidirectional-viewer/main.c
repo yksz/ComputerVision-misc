@@ -1,9 +1,10 @@
+#include <assert.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
-#if defined(__APPLE__) && defined(__MACH__)
+#if defined __APPLE__ && defined __MACH__
 #include <GLUT/glut.h>
 #else
 #include <GL/glut.h>
@@ -13,6 +14,8 @@
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif // M_PI
+
+static const unsigned int kTimerPeriod = 100; // [ms]
 
 typedef struct
 {
@@ -39,6 +42,8 @@ static GLuint texture;
 
 static void setViewpoint(Viewpoint* v)
 {
+    assert(v != NULL);
+
     gluLookAt(v->ex, v->ey, v->ez,
               v->cx, v->cy, v->cz,
               v->ux, v->uy, v->uz);
@@ -46,6 +51,8 @@ static void setViewpoint(Viewpoint* v)
 
 static void rotate(Viewpoint* v, float theta, float phi)
 {
+    assert(v != NULL);
+
     float x = v->cx - v->ex;
     float y = v->cy - v->ey;
     float z = v->cz - v->ez;
@@ -81,6 +88,8 @@ static void setUpView(int width, int height)
 
 static void updateTexture(IplImage* img, bool mipmap)
 {
+    assert(img != NULL);
+
     if (mipmap) { // Mipmapの場合は画像サイズの制限はない
         gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGB, img->width, img->height,
                 GL_BGR_EXT, GL_UNSIGNED_BYTE, img->imageData);
@@ -101,11 +110,6 @@ static void callDisplayListWithTexture()
     glPopMatrix();
 }
 
-static void idle()
-{
-    glutPostRedisplay();
-}
-
 static void display()
 {
     glMatrixMode(GL_MODELVIEW); // 現在の行列をモデルビュー変換行列に変更する
@@ -115,6 +119,9 @@ static void display()
     setViewpoint(&viewpoint);
 
     IplImage* image = Loader_loadImage();
+    if (image == NULL) {
+        exit(EXIT_FAILURE);
+    }
     updateTexture(image, false);
     cvReleaseImage(&image);
     callDisplayListWithTexture();
@@ -192,6 +199,12 @@ static void mouseDrag(int x, int y)
 
 static void mouseMove(int x, int y) {}
 
+static void timer(int value)
+{
+    glutPostRedisplay();
+    glutTimerFunc(kTimerPeriod, timer, 0);
+}
+
 static void initDisplayList(void)
 {
     displayList = glGenLists(1);
@@ -201,12 +214,9 @@ static void initDisplayList(void)
     gluQuadricNormals(sphere, GLU_SMOOTH); // 面の法線を生成するか、する場合は頂点ごとにひとつの法線を生成するのか、または面ごとに作成するのかを定義
     gluQuadricTexture(sphere, GL_TRUE); // テクスチャ座標をを生成するかを定義
     gluQuadricDrawStyle(sphere, GLU_FILL); // 四辺形を多角形、線、または点の集合として描くかを定義
-
     // 球を描画（オブジェクト, 半径, 経線方向の分割数, 緯線方向の分割数）
     gluSphere(sphere, 100.0, 32, 32);
-    // 円柱の描画（オブジェクト, 底面の半径, 上面の半径, 高さ, 経線方向の分割数, 緯線方向の分割数）
-    //glTranslatef(0.0, 0.0, -5.0);
-    //gluCylinder(sphere, 2.0, 2.0, 10, 64, 64);
+    gluDeleteQuadric(sphere);
 
     glEndList();
 }
@@ -237,16 +247,17 @@ static void init(void)
 static void onExit(void)
 {
     glDeleteTextures(1, &texture);
+    Loader_free();
 }
 
 int main(int argc, char** argv)
 {
     if (argc <= 1) {
-        fprintf(stderr, "usage: %s [options] <image file>\n", argv[0]);
+        fprintf(stderr, "usage: %s [options] <image directory>\n", argv[0]);
         return 1;
     }
-    char* imageFileName = argv[argc - 1];
-    Loader_init(imageFileName);
+    char* dirname = argv[argc - 1];
+    Loader_init(dirname);
 
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH);
@@ -254,7 +265,9 @@ int main(int argc, char** argv)
     glutInitWindowSize(640, 480);
     glutCreateWindow("Omnidirectional Viewer");
 
-    glutIdleFunc(idle);
+    atexit(onExit);
+    init();
+
     glutDisplayFunc(display);
     glutReshapeFunc(reshape);
     glutKeyboardFunc(keyboard);
@@ -262,11 +275,8 @@ int main(int argc, char** argv)
     glutMouseFunc(mouseClick);
     glutMotionFunc(mouseDrag);
     glutPassiveMotionFunc(mouseMove);
-
-    atexit(onExit);
-    init();
+    glutTimerFunc(kTimerPeriod, timer, 0);
 
     glutMainLoop();
     return 0;
 }
-
