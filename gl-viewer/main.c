@@ -1,14 +1,14 @@
 #include <math.h>
 #include <stdbool.h>
 #include <stdlib.h>
-#if defined(__APPLE__) && defined(__MACH__)
+#if defined __APPLE__ && defined __MACH__
 #include <GLUT/glut.h>
 #else
 #include <GL/glut.h>
 #endif // __APPLE__ && __MACH__
 #include "logger.h"
 
-#define PERSPECTIVE_ENABLED
+#define PERSPECTIVE_ENABLED 1
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -97,7 +97,7 @@ static void setUpView(int width, int height)
 
     const double near = 1.0;    // 前方クリップ面と視点間の距離
     const double far  = 1000.0; // 後方クリップ面と視点間の距離
-#ifdef PERSPECTIVE_ENABLED
+#if PERSPECTIVE_ENABLED
     // 透視投影
     gluPerspective(60.0, // x-z平面の視野角
             (double) width / height, // 視野角の縦横比
@@ -264,14 +264,14 @@ int main(int argc, char** argv)
     glutInitWindowSize(512, 512);
     glutCreateWindow(argv[0]);
 
+    init();
+
     glutIdleFunc(idle);
     glutDisplayFunc(display);
     glutReshapeFunc(reshape);
     glutKeyboardFunc(keyboard);
     glutMouseFunc(mouse);
     glutMotionFunc(motion);
-
-    init();
 
     glutMainLoop();
     return 0;
