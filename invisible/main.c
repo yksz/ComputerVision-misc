@@ -45,8 +45,7 @@ static IplImage* detectSkinColor(IplImage* src)
 
 static IplImage* renderInvisible(IplImage* src, IplImage* bg)
 {
-    assert(src != NULL);
-    assert(bg != NULL);
+    assert(src != NULL || bg != NULL);
 
     IplImage* dst = cvCloneImage(src);
     IplImage* mask = detectSkinColor(dst);
