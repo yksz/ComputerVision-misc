@@ -1,4 +1,3 @@
-#include <assert.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -42,8 +41,6 @@ static GLuint texture;
 
 static void setViewpoint(Viewpoint* v)
 {
-    assert(v != NULL);
-
     gluLookAt(v->ex, v->ey, v->ez,
               v->cx, v->cy, v->cz,
               v->ux, v->uy, v->uz);
@@ -51,8 +48,6 @@ static void setViewpoint(Viewpoint* v)
 
 static void rotate(Viewpoint* v, float theta, float phi)
 {
-    assert(v != NULL);
-
     float x = v->cx - v->ex;
     float y = v->cy - v->ey;
     float z = v->cz - v->ez;
@@ -88,8 +83,6 @@ static void setUpView(int width, int height)
 
 static void updateTexture(IplImage* img, bool mipmap)
 {
-    assert(img != NULL);
-
     if (mipmap) { // Mipmapの場合は画像サイズの制限はない
         gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGB, img->width, img->height,
                 GL_BGR_EXT, GL_UNSIGNED_BYTE, img->imageData);
@@ -147,23 +140,6 @@ static void keyboard(unsigned char key, int x, int y)
     }
 }
 
-static void special(int key, int x, int y)
-{
-    switch (key) {
-        case GLUT_KEY_UP:
-            break;
-
-        case GLUT_KEY_DOWN:
-            break;
-
-        case GLUT_KEY_LEFT:
-            break;
-
-        case GLUT_KEY_RIGHT:
-            break;
-    }
-}
-
 static void mouseClick(int button, int state, int x, int y)
 {
     leftButton.pressed = false;
@@ -197,8 +173,6 @@ static void mouseDrag(int x, int y)
     }
 }
 
-static void mouseMove(int x, int y) {}
-
 static void timer(int value)
 {
     glutPostRedisplay();
@@ -214,8 +188,14 @@ static void initDisplayList(void)
     gluQuadricNormals(sphere, GLU_SMOOTH); // 面の法線を生成するか、する場合は頂点ごとにひとつの法線を生成するのか、または面ごとに作成するのかを定義
     gluQuadricTexture(sphere, GL_TRUE); // テクスチャ座標をを生成するかを定義
     gluQuadricDrawStyle(sphere, GLU_FILL); // 四辺形を多角形、線、または点の集合として描くかを定義
-    // 球を描画（オブジェクト, 半径, 経線方向の分割数, 緯線方向の分割数）
-    gluSphere(sphere, 100.0, 32, 32);
+
+    // 球を描画(オブジェクト, 半径, 経線方向の分割数, 緯線方向の分割数)
+    gluSphere(sphere, 50.0, 32, 32);
+
+    // 円柱の描画(オブジェクト, 底面の半径, 上面の半径, 高さ, 経線方向の分割数, 緯線方向の分割数)
+    //gluCylinder(sphere, 2.0, 2.0, 10.0, 64, 64);
+    //glTranslatef(0.0, 0.0, -5.0);
+
     gluDeleteQuadric(sphere);
 
     glEndList();
@@ -234,8 +214,8 @@ static void initTexture(void)
     //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); // 双線形補間
 
     // テクスチャの繰り返しの指定
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);  // s軸方向の繰り返しを行わない
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);  // t軸方向の繰り返しを行わない
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP); // s軸方向の繰り返しを行わない
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP); // t軸方向の繰り返しを行わない
 }
 
 static void init(void)
@@ -271,10 +251,8 @@ int main(int argc, char** argv)
     glutDisplayFunc(display);
     glutReshapeFunc(reshape);
     glutKeyboardFunc(keyboard);
-    glutSpecialFunc(special);
     glutMouseFunc(mouseClick);
     glutMotionFunc(mouseDrag);
-    glutPassiveMotionFunc(mouseMove);
     glutTimerFunc(kTimerPeriod, timer, 0);
 
     glutMainLoop();

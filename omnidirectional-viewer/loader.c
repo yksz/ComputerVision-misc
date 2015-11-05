@@ -10,7 +10,7 @@
 static const char kSeparator = '/';
 static const size_t kMaxPathLength = 64;
 
-static char* dirname;
+static const char* dirname;
 static struct dirent** list;
 static int listSize;
 static int listIndex;
@@ -23,7 +23,7 @@ static int filter(const struct dirent* file)
     return 1;
 }
 
-bool Loader_init(char* dir)
+bool Loader_init(const char* dir)
 {
     assert(dir != NULL);
 
@@ -44,7 +44,7 @@ void Loader_free(void)
     free(list);
 }
 
-static void appendToPath(char* path, char* dir, char* file, size_t n)
+static void getFilePath(char* path, const char* dir, const char* file, size_t n)
 {
     strncat(path, dirname, n);
     if (path[strlen(path) - 1] != kSeparator) {
@@ -61,7 +61,7 @@ IplImage* Loader_loadImage(void)
 
     char path[kMaxPathLength];
     memset(path, 0, kMaxPathLength);
-    appendToPath(path, dirname, list[listIndex]->d_name, kMaxPathLength);
+    getFilePath(path, dirname, list[listIndex]->d_name, kMaxPathLength);
 
     IplImage* image = cvLoadImage(path, CV_LOAD_IMAGE_COLOR);
     if (image == NULL) {
