@@ -236,7 +236,7 @@ int main(int argc, char** argv)
         fprintf(stderr, "usage: %s [options] <image directory>\n", argv[0]);
         return 1;
     }
-    char* dirname = argv[argc - 1];
+    const char* dirname = argv[argc - 1];
     Loader_init(dirname);
 
     glutInit(&argc, argv);

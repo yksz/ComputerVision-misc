@@ -13,8 +13,8 @@ typedef enum {
     Mode_CAPTURE, Mode_MASK, Mode_INVISIBLE
 } Mode;
 
-static CvCapture* capture = NULL;
-static IplImage* fileImage = NULL;
+static CvCapture* s_capture = NULL;
+static IplImage* s_fileImage = NULL;
 
 static IplImage* detectSkinColor(IplImage* src)
 {
@@ -68,7 +68,7 @@ static IplImage* loadImage(const char* filename)
 
     IplImage* img = cvLoadImage(filename, CV_LOAD_IMAGE_COLOR);
     if (img == NULL) {
-        fprintf(stderr, "Failed to load image: %s\n", filename);
+        fprintf(stderr, "ERROR: Failed to load image: %s\n", filename);
         return NULL;
     }
     return img;
@@ -84,26 +84,26 @@ static IplImage* releaseImage(IplImage* img)
 
 static IplImage* getImage()
 {
-    if (capture != NULL) {
-        return cvQueryFrame(capture);
-    } else if (fileImage != NULL) {
-        return fileImage;
+    if (s_capture != NULL) {
+        return cvQueryFrame(s_capture);
+    } else if (s_fileImage != NULL) {
+        return s_fileImage;
     } else {
-        capture = cvCaptureFromCAM(CV_CAP_ANY);
-        if (capture == NULL) {
+        s_capture = cvCaptureFromCAM(CV_CAP_ANY);
+        if (s_capture == NULL) {
             fprintf(stderr, "ERROR: Camera not found\n");
             return NULL;
         }
-        cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, kWidth);
-        cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, kHeight);
-        return cvQueryFrame(capture);
+        cvSetCaptureProperty(s_capture, CV_CAP_PROP_FRAME_WIDTH, kWidth);
+        cvSetCaptureProperty(s_capture, CV_CAP_PROP_FRAME_HEIGHT, kHeight);
+        return cvQueryFrame(s_capture);
     }
 }
 
 int main(int argc, char** argv)
 {
     if (argc > 1) {
-        fileImage = loadImage(argv[1]);
+        s_fileImage = loadImage(argv[1]);
     }
     IplImage* background = NULL;
 

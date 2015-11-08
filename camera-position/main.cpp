@@ -43,16 +43,16 @@ bool readObjectPoints(const std::string& filename,
 void onMouse(int event, int x, int y, int flags, void* params) {
     switch (event) {
         case cv::EVENT_LBUTTONDOWN:
-            assert(clickedPoints != NULL);
+            assert(::clickedPoints != NULL);
 
-            if (clickedPoints->size() >= maxClickedCount) {
+            if (::clickedPoints->size() >= ::maxClickedCount) {
                 return;
             }
             cv::Point2f point(x, y);
-            clickedPoints->push_back(point);
-            std::cout << "count=" << clickedPoints->size() << ", clicked=" << point << std::endl;
-            drawCross(shownImage, point, cv::Scalar(0, 0, 255), 7, 2);
-            cv::imshow(shownWindowName, shownImage);
+            ::clickedPoints->push_back(point);
+            std::cout << "count=" << ::clickedPoints->size() << ", clicked=" << point << std::endl;
+            drawCross(::shownImage, point, cv::Scalar(0, 0, 255), 7, 2);
+            cv::imshow(::shownWindowName, ::shownImage);
             break;
     }
 }
@@ -68,25 +68,25 @@ void onMouse(int event, int x, int y, int flags, void* params) {
 bool readImagePoints(const std::string& filename,
         int numPoints,
         std::vector<cv::Point2f>& imagePoints) {
-    shownWindowName = filename;
-    shownImage = cv::imread(filename);
-    if (shownImage.data == NULL) {
+    ::shownWindowName = filename;
+    ::shownImage = cv::imread(filename);
+    if (::shownImage.data == NULL) {
         std::cerr << "ERROR: Failed to read image" << filename << std::endl;
         return false;
     }
-    maxClickedCount = numPoints;
-    clickedPoints = &imagePoints;
+    ::maxClickedCount = numPoints;
+    ::clickedPoints = &imagePoints;
 
-    cv::namedWindow(shownWindowName, cv::WINDOW_AUTOSIZE);
-    cv::imshow(shownWindowName, shownImage);
-    cv::setMouseCallback(shownWindowName, onMouse);
+    cv::namedWindow(::shownWindowName, cv::WINDOW_AUTOSIZE);
+    cv::imshow(::shownWindowName, ::shownImage);
+    cv::setMouseCallback(::shownWindowName, onMouse);
     cv::waitKey(0);
-    if (clickedPoints->size() < maxClickedCount) {
+    if (::clickedPoints->size() < ::maxClickedCount) {
         return false;
     }
 
     std::cout << "\nclickedImagePoints:\n" << imagePoints << std::endl;
-    clickedPoints = NULL;
+    ::clickedPoints = NULL;
     return true;
 }
 
@@ -119,14 +119,14 @@ bool readCameraParameters(const std::string& filename,
  */
 void evaluateImagePoints(std::vector<cv::Point2f>& points, std::vector<cv::Point2f>& reprojectedPoints) {
     for (std::vector<cv::Point2f>::iterator it = points.begin(); it != points.end(); it++) {
-        drawCross(shownImage, *it, cv::Scalar(0, 0, 255), 7, 2);
+        drawCross(::shownImage, *it, cv::Scalar(0, 0, 255), 7, 2);
     }
     for (std::vector<cv::Point2f>::iterator it = reprojectedPoints.begin(); it != reprojectedPoints.end(); it++) {
-        drawCross(shownImage, *it, cv::Scalar(255, 0, 0), 7, 2);
+        drawCross(::shownImage, *it, cv::Scalar(255, 0, 0), 7, 2);
     }
-    cv::imshow(shownWindowName, shownImage);
+    cv::imshow(::shownWindowName, ::shownImage);
     cv::waitKey(0);
-    cv::destroyWindow(shownWindowName);
+    cv::destroyWindow(::shownWindowName);
 
     std::cout << "reprojectedImagePoints:\n" << reprojectedPoints << "\n\n";
 }

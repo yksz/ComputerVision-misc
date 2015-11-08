@@ -44,25 +44,25 @@ typedef struct
     int x, y;
 } MouseButton;
 
-static Viewpoint viewpoint = {
+static Viewpoint s_viewpoint = {
     .ex =   0.0, .ey =   0.0, .ez = 200.0,
     .cx =   0.0, .cy =   0.0, .cz =   0.0,
     .ux =   0.0, .uy =   1.0, .uz =   0.0,
 };
-static Light light0 = {
+static Light s_light0 = {
     .position  = { 50.0f, 100.0f, 50.0f, 1.0f },
     .ambient   = {  0.2f,   0.2f,  0.2f, 1.0f },
     .diffuse   = {  1.0f,   1.0f,  1.0f, 1.0f },
     .specular  = {  1.0f,   1.0f,  1.0f, 1.0f },
     .direction = { -0.5f,  -1.0f, -0.5f },
 };
-static Material material = {
+static Material s_material = {
     .ambient   = {  0.2f, 0.2f, 0.2f, 1.0 },
     .diffuse   = {  1.0f, 0.0f, 0.0f, 1.0 },
     .specular  = {  1.0f, 1.0f, 1.0f, 1.0 },
     .shininess = { 30.0f },
 };
-static MouseButton leftButton, rightButton;
+static MouseButton s_leftButton, s_rightButton;
 
 static void setViewpoint(Viewpoint* v)
 {
@@ -164,9 +164,9 @@ static void display(void)
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // バッファをクリア
 
-    setViewpoint(&viewpoint);
-    setLight0(&light0);
-    setMaterial(&material);
+    setViewpoint(&s_viewpoint);
+    setLight0(&s_light0);
+    setMaterial(&s_material);
 
     drawAxes(100);
     glutSolidTeapot(50);
@@ -201,21 +201,21 @@ static void mouse(int button, int state, int x, int y)
 {
     LOGGER_DEBUG("button=%d, state=%d, x=%d, y=%d\n", button, state, x, y);
 
-    leftButton.pressed = false;
-    rightButton.pressed = false;
+    s_leftButton.pressed = false;
+    s_rightButton.pressed = false;
 
     if (state == GLUT_DOWN) {
         switch (button) {
             case GLUT_LEFT_BUTTON:
-                leftButton.pressed = true;
-                leftButton.x = x;
-                leftButton.y = y;
+                s_leftButton.pressed = true;
+                s_leftButton.x = x;
+                s_leftButton.y = y;
                 break;
 
             case GLUT_RIGHT_BUTTON:
-                rightButton.pressed = true;
-                rightButton.x = x;
-                rightButton.y = y;
+                s_rightButton.pressed = true;
+                s_rightButton.x = x;
+                s_rightButton.y = y;
                 break;
         }
     }
@@ -226,19 +226,19 @@ static void motion(int x, int y)
 {
     LOGGER_DEBUG("x=%d, y=%d\n", x, y);
 
-    if (leftButton.pressed) {
+    if (s_leftButton.pressed) {
         const double rotateRate = 0.5;
-        double theta = rotateRate * (leftButton.x - x) * M_PI / 180.0;
-        double phi   = rotateRate * (y - leftButton.y) * M_PI / 180.0;
-        rotate(&viewpoint, theta, phi);
-        leftButton.x = x;
-        leftButton.y = y;
-    } else if (rightButton.pressed) {
+        double theta = rotateRate * (s_leftButton.x - x) * M_PI / 180.0;
+        double phi   = rotateRate * (y - s_leftButton.y) * M_PI / 180.0;
+        rotate(&s_viewpoint, theta, phi);
+        s_leftButton.x = x;
+        s_leftButton.y = y;
+    } else if (s_rightButton.pressed) {
         const double zoomRate = 0.01;
-        double magnification = 1 + zoomRate * (rightButton.y - y);
-        zoom(&viewpoint, magnification);
-        rightButton.x = x;
-        rightButton.y = y;
+        double magnification = 1 + zoomRate * (s_rightButton.y - y);
+        zoom(&s_viewpoint, magnification);
+        s_rightButton.x = x;
+        s_rightButton.y = y;
     }
 }
 

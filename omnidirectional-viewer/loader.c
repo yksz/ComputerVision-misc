@@ -10,10 +10,10 @@
 static const char kSeparator = '/';
 static const size_t kMaxPathLength = 64;
 
-static const char* dirname;
-static struct dirent** list;
-static int listSize;
-static int listIndex;
+static const char* s_dirname;
+static struct dirent** s_list;
+static int s_listSize;
+static int s_listIndex;
 
 static int filter(const struct dirent* file)
 {
@@ -27,26 +27,26 @@ bool Loader_init(const char* dir)
 {
     assert(dir != NULL);
 
-    dirname = dir;
-    listSize = scandir(dirname, &list, filter, alphasort);
-    if (listSize == -1) {
-        fprintf(stderr, "Failed to scan directory: %s\n", dirname);
+    s_dirname = dir;
+    s_listSize = scandir(s_dirname, &s_list, filter, alphasort);
+    if (s_listSize == -1) {
+        fprintf(stderr, "ERROR: Failed to scan directory: %s\n", s_dirname);
         return false;
     }
     return true;
 }
 
-void Loader_free(void)
+void Loader_finalize(void)
 {
-    for (int i = 0; i < listSize; i++) {
-        free(list[i]);
+    for (int i = 0; i < s_listSize; i++) {
+        free(s_list[i]);
     }
-    free(list);
+    free(s_list);
 }
 
 static void getFilePath(char* path, const char* dir, const char* file, size_t n)
 {
-    strncat(path, dirname, n);
+    strncat(path, dir, n);
     if (path[strlen(path) - 1] != kSeparator) {
         strncat(path, &kSeparator, n);
     }
@@ -55,17 +55,17 @@ static void getFilePath(char* path, const char* dir, const char* file, size_t n)
 
 IplImage* Loader_loadImage(void)
 {
-    if (listIndex >= listSize) {
-        listIndex = 0;
+    if (s_listIndex >= s_listSize) {
+        s_listIndex = 0;
     }
 
     char path[kMaxPathLength];
     memset(path, 0, kMaxPathLength);
-    getFilePath(path, dirname, list[listIndex]->d_name, kMaxPathLength);
+    getFilePath(path, s_dirname, s_list[s_listIndex]->d_name, kMaxPathLength);
 
     IplImage* image = cvLoadImage(path, CV_LOAD_IMAGE_COLOR);
     if (image == NULL) {
-        fprintf(stderr, "Failed to load image: %s\n", path);
+        fprintf(stderr, "ERROR: Failed to load image: %s\n", path);
         return NULL;
     }
     // 上下が逆のときは反転させる
@@ -73,6 +73,6 @@ IplImage* Loader_loadImage(void)
         cvFlip(image, image, -1);
     }
 
-    listIndex++;
+    s_listIndex++;
     return image;
 }

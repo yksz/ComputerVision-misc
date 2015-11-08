@@ -5,7 +5,6 @@
 namespace {
 
 static const int kDefaultNumImages = 3;
-
 static const int kChessPatternRows = 7;
 static const int kChessPatternColumns = 10;
 static const float kChessGridSize = 24.0; // [mm]

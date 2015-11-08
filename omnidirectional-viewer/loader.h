@@ -5,7 +5,7 @@
 #include <opencv/cv.h>
 
 bool Loader_init(const char* dir);
-void Loader_free(void);
+void Loader_finalize(void);
 IplImage* Loader_loadImage(void);
 
 #endif /* LOADER_H */
