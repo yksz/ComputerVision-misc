@@ -176,14 +176,14 @@ static void display(void)
 
 static void reshape(int width, int height)
 {
-    LOGGER_DEBUG("width=%4d, height=%4d\n", width, height);
+    LOG_DEBUG("width=%4d, height=%4d", width, height);
 
     setUpView(width, height);
 }
 
 static void keyboard(unsigned char key, int x, int y)
 {
-    LOGGER_DEBUG("key=%c, x=%4d, y=%4d\n", key, x, y);
+    LOG_DEBUG("key=%c, x=%4d, y=%4d", key, x, y);
 
     switch (key) {
         case 'q':
@@ -199,7 +199,7 @@ static void keyboard(unsigned char key, int x, int y)
 // click
 static void mouse(int button, int state, int x, int y)
 {
-    LOGGER_DEBUG("button=%d, state=%d, x=%d, y=%d\n", button, state, x, y);
+    LOG_DEBUG("button=%d, state=%d, x=%d, y=%d", button, state, x, y);
 
     s_leftButton.pressed = false;
     s_rightButton.pressed = false;
@@ -224,7 +224,7 @@ static void mouse(int button, int state, int x, int y)
 // drag
 static void motion(int x, int y)
 {
-    LOGGER_DEBUG("x=%d, y=%d\n", x, y);
+    LOG_DEBUG("x=%d, y=%d", x, y);
 
     if (s_leftButton.pressed) {
         const double rotateRate = 0.5;

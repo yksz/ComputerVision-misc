@@ -1,45 +1,50 @@
 #include "logger.h"
 #include <assert.h>
 #include <stdarg.h>
-#include <stdio.h>
 #include <time.h>
 
-static LogLevel currentLevel = LogLevel_INFO;
+static LogLevel s_logLevel = LogLevel_INFO;
 
-void logger_write(LogLevel level, FILE* fp, const char* file, int line, const char* func, const char* fmt, ...)
+void logger_setLevel(LogLevel level)
 {
-    if (currentLevel > level) {
+    s_logLevel = level;
+}
+
+void logger_log(LogLevel level, FILE* fp, const char* file, int line, const char* func, const char* fmt, ...)
+{
+    time_t now;
+    char timestr[20];
+    const char* levelstr;
+    va_list arg;
+
+    if (s_logLevel > level) {
         return;
     }
 
-    time_t now = time(NULL);
-    char timestr[20];
-    strftime(timestr, sizeof(timestr), "%Y/%m/%d %H:%M:%S", localtime(&now));
-
+    now = time(NULL);
+    strftime(timestr, sizeof(timestr), "%Y-%m-%d %H:%M:%S", localtime(&now));
     switch (level) {
         case LogLevel_DEBUG:
-            fprintf(fp, "%s DEBUG %s:%d:%s: ", timestr, file, line, func);
+            levelstr = "DEBUG";
             break;
         case LogLevel_INFO:
-            fprintf(fp, "%s INFO  %s:%d:%s: ", timestr, file, line, func);
+            levelstr = "INFO ";
             break;
         case LogLevel_WARN:
-            fprintf(fp, "%s WARN  %s:%d:%s: ", timestr, file, line, func);
+            levelstr = "WARN ";
             break;
         case LogLevel_ERROR:
-            fprintf(fp, "%s ERROR %s:%d:%s: ", timestr, file, line, func);
+            levelstr = "ERROR ";
             break;
         default:
             assert(0 && "Unknown LogLevel");
+            return;
     }
+    fprintf(fp, "%s %s %s:%d:%s: ", timestr, levelstr, file, line, func);
 
-    va_list list;
-    va_start(list, fmt);
-    vfprintf(fp, fmt, list);
-    va_end(list);
-}
+    va_start(arg, fmt);
+    vfprintf(fp, fmt, arg);
+    va_end(arg);
 
-void logger_setLevel(LogLevel newLevel)
-{
-    currentLevel = newLevel;
+    fprintf(fp, "\n");
 }
