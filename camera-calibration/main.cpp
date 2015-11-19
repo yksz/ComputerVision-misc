@@ -2,8 +2,6 @@
 #include <string>
 #include <opencv2/opencv.hpp>
 
-namespace {
-
 static const int kDefaultNumImages = 3;
 static const int kChessPatternRows = 7;
 static const int kChessPatternColumns = 10;
@@ -14,7 +12,7 @@ static const float kChessGridSize = 24.0; // [mm]
  *
  * @param[out] objectPoints 物体上の点
  */
-void readObjectPoints(std::vector<cv::Point3f>& objectPoints) {
+static void readObjectPoints(std::vector<cv::Point3f>& objectPoints) {
     for (int i = 0; i < kChessPatternRows; i++) {
         for (int j = 0; j < kChessPatternColumns; j++) {
             cv::Point3f point;
@@ -34,7 +32,7 @@ void readObjectPoints(std::vector<cv::Point3f>& objectPoints) {
  * @param[out] corners チェスボードの交点位置
  * @return 求めることができた場合はtrue、そうでなければfalse
  */
-bool findChessboardCorners(cv::Mat& image, cv::Size& patternSize,
+static bool findChessboardCorners(cv::Mat& image, cv::Size& patternSize,
         std::vector<cv::Point2f>& corners) {
     bool found = cv::findChessboardCorners(image, patternSize, corners);
     if (!found) {
@@ -57,7 +55,7 @@ bool findChessboardCorners(cv::Mat& image, cv::Size& patternSize,
  * @param[out] imagePoints 画像上の対応点
  * @return 読み込めた場合はtrue、そうでなければfalse
  */
-bool readImagePoints(cv::Mat& image,
+static bool readImagePoints(cv::Mat& image,
         std::vector<cv::Point2f>& imagePoints) {
     // チェスボードの交点を検出する
     cv::Size patternSize(kChessPatternColumns, kChessPatternRows);
@@ -87,7 +85,7 @@ bool readImagePoints(cv::Mat& image,
  * @param[out] tvecs 各画像におけるカメラの並進ベクトル
  * @return キャリブレーションに成功した場合はtrue、そうでなければfalse
  */
-bool calibrateCamera(const std::string& imageDirName, int numImages,
+static bool calibrateCamera(const std::string& imageDirName, int numImages,
         cv::Mat& intrinsic, cv::Mat& distortion,
         std::vector<cv::Mat>& rvecs, std::vector<cv::Mat>& tvecs) {
     std::vector<std::vector<cv::Point2f> > imagePointsList;
@@ -138,7 +136,7 @@ bool calibrateCamera(const std::string& imageDirName, int numImages,
  * @param[in] tvec カメラの並進ベクトル
  * @return 書き込めた場合はtrue、そうでなければfalse
  */
-bool writeCameraInfo(const std::string& filename,
+static bool writeCameraInfo(const std::string& filename,
         cv::Mat& intrinsic, cv::Mat& distortion,
         cv::Mat& rvec, cv::Mat& tvec) {
     cv::FileStorage fs(filename, cv::FileStorage::WRITE);
@@ -153,8 +151,6 @@ bool writeCameraInfo(const std::string& filename,
     fs.release();
     return true;
 }
-
-} // unnamed namespace
 
 int main(int argc, char* argv[]) {
     if (argc <= 1) {

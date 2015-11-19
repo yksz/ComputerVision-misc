@@ -5,14 +5,12 @@
 #include <vector>
 #include <opencv2/opencv.hpp>
 
-namespace {
+static std::string s_shownWindowName;
+static cv::Mat s_shownImage;
+static std::size_t s_maxClickedCount = 0;
+static std::vector<cv::Point2f>* s_clickedPoints = NULL;
 
-std::string shownWindowName;
-cv::Mat shownImage;
-std::size_t maxClickedCount = 0;
-std::vector<cv::Point2f>* clickedPoints = NULL;
-
-void drawCross(cv::Mat& image, cv::Point2f& point, const cv::Scalar& color, int length, int thickness = 1) {
+static void drawCross(cv::Mat& image, cv::Point2f& point, const cv::Scalar& color, int length, int thickness = 1) {
     cv::line(image, cv::Point2f(point.x - length, point.y), cv::Point2f(point.x + length, point.y), color, thickness);
     cv::line(image, cv::Point2f(point.x, point.y - length), cv::Point2f(point.x, point.y + length), color, thickness);
 }
@@ -24,7 +22,7 @@ void drawCross(cv::Mat& image, cv::Point2f& point, const cv::Scalar& color, int 
  * @param[out] objectPoints 物体上の点
  * @return 読み込めた場合はtrue、そうでなければfalse
  */
-bool readObjectPoints(const std::string& filename,
+static bool readObjectPoints(const std::string& filename,
         std::vector<cv::Point3f>& objectPoints) {
     std::ifstream ifs(filename.c_str());
     if (!ifs.is_open()) {
@@ -40,19 +38,19 @@ bool readObjectPoints(const std::string& filename,
     return true;
 }
 
-void onMouse(int event, int x, int y, int flags, void* params) {
+static void onMouse(int event, int x, int y, int flags, void* params) {
     switch (event) {
         case cv::EVENT_LBUTTONDOWN:
-            assert(::clickedPoints != NULL);
+            assert(s_clickedPoints != NULL);
 
-            if (::clickedPoints->size() >= ::maxClickedCount) {
+            if (s_clickedPoints->size() >= s_maxClickedCount) {
                 return;
             }
             cv::Point2f point(x, y);
-            ::clickedPoints->push_back(point);
-            std::cout << "count=" << ::clickedPoints->size() << ", clicked=" << point << std::endl;
-            drawCross(::shownImage, point, cv::Scalar(0, 0, 255), 7, 2);
-            cv::imshow(::shownWindowName, ::shownImage);
+            s_clickedPoints->push_back(point);
+            std::cout << "count=" << s_clickedPoints->size() << ", clicked=" << point << std::endl;
+            drawCross(s_shownImage, point, cv::Scalar(0, 0, 255), 7, 2);
+            cv::imshow(s_shownWindowName, s_shownImage);
             break;
     }
 }
@@ -65,28 +63,28 @@ void onMouse(int event, int x, int y, int flags, void* params) {
  * @param[out] imagePoints 画像上の対応点
  * @return 読み込めた場合はtrue、そうでなければfalse
  */
-bool readImagePoints(const std::string& filename,
+static bool readImagePoints(const std::string& filename,
         int numPoints,
         std::vector<cv::Point2f>& imagePoints) {
-    ::shownWindowName = filename;
-    ::shownImage = cv::imread(filename);
-    if (::shownImage.data == NULL) {
+    s_shownWindowName = filename;
+    s_shownImage = cv::imread(filename);
+    if (s_shownImage.data == NULL) {
         std::cerr << "ERROR: Failed to read image" << filename << std::endl;
         return false;
     }
-    ::maxClickedCount = numPoints;
-    ::clickedPoints = &imagePoints;
+    s_maxClickedCount = numPoints;
+    s_clickedPoints = &imagePoints;
 
-    cv::namedWindow(::shownWindowName, cv::WINDOW_AUTOSIZE);
-    cv::imshow(::shownWindowName, ::shownImage);
-    cv::setMouseCallback(::shownWindowName, onMouse);
+    cv::namedWindow(s_shownWindowName, cv::WINDOW_AUTOSIZE);
+    cv::imshow(s_shownWindowName, s_shownImage);
+    cv::setMouseCallback(s_shownWindowName, onMouse);
     cv::waitKey(0);
-    if (::clickedPoints->size() < ::maxClickedCount) {
+    if (s_clickedPoints->size() < s_maxClickedCount) {
         return false;
     }
 
     std::cout << "\nclickedImagePoints:\n" << imagePoints << std::endl;
-    ::clickedPoints = NULL;
+    s_clickedPoints = NULL;
     return true;
 }
 
@@ -98,7 +96,7 @@ bool readImagePoints(const std::string& filename,
  * @param[out] distortion 歪み係数ベクトル
  * @return 読み込めた場合はtrue、そうでなければfalse
  */
-bool readCameraParameters(const std::string& filename,
+static bool readCameraParameters(const std::string& filename,
         cv::Mat& intrinsic, cv::Mat& distortion) {
     cv::FileStorage fs(filename, cv::FileStorage::READ);
     if (!fs.isOpened()) {
@@ -117,16 +115,16 @@ bool readCameraParameters(const std::string& filename,
  * @param[in] points 手動で入力した画像上の対応点
  * @param[in] reprojectedPoints 再投影した画像上の対応点
  */
-void evaluateImagePoints(std::vector<cv::Point2f>& points, std::vector<cv::Point2f>& reprojectedPoints) {
+static void evaluateImagePoints(std::vector<cv::Point2f>& points, std::vector<cv::Point2f>& reprojectedPoints) {
     for (std::vector<cv::Point2f>::iterator it = points.begin(); it != points.end(); it++) {
-        drawCross(::shownImage, *it, cv::Scalar(0, 0, 255), 7, 2);
+        drawCross(s_shownImage, *it, cv::Scalar(0, 0, 255), 7, 2);
     }
     for (std::vector<cv::Point2f>::iterator it = reprojectedPoints.begin(); it != reprojectedPoints.end(); it++) {
-        drawCross(::shownImage, *it, cv::Scalar(255, 0, 0), 7, 2);
+        drawCross(s_shownImage, *it, cv::Scalar(255, 0, 0), 7, 2);
     }
-    cv::imshow(::shownWindowName, ::shownImage);
+    cv::imshow(s_shownWindowName, s_shownImage);
     cv::waitKey(0);
-    cv::destroyWindow(::shownWindowName);
+    cv::destroyWindow(s_shownWindowName);
 
     std::cout << "reprojectedImagePoints:\n" << reprojectedPoints << "\n\n";
 }
@@ -141,7 +139,7 @@ void evaluateImagePoints(std::vector<cv::Point2f>& points, std::vector<cv::Point
  * @param[out] tvec カメラの並進ベクトル
  * @return 推定できた場合はtrue、そうでなければfalse
  */
-bool estimateCameraPosition(const std::string& objectPointsFileName,
+static bool estimateCameraPosition(const std::string& objectPointsFileName,
         const std::string& imageFileName,
         const std::string& cameraParamsFileName,
         cv::Mat& rvec,
@@ -180,7 +178,7 @@ bool estimateCameraPosition(const std::string& objectPointsFileName,
  * @param[in] tvec カメラの並進ベクトル
  * @return 書き込めた場合はtrue、そうでなければfalse
  */
-bool writeCameraPosition(const std::string& filename,
+static bool writeCameraPosition(const std::string& filename,
         cv::Mat& rvec, cv::Mat& tvec) {
     cv::FileStorage fs(filename, cv::FileStorage::WRITE);
     if (!fs.isOpened()) {
@@ -191,8 +189,6 @@ bool writeCameraPosition(const std::string& filename,
     fs << "translation" << tvec;
     return true;
 }
-
-} // unnamed namespace
 
 int main(int argc, char** argv) {
     if (argc <= 3) {

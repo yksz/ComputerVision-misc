@@ -2,16 +2,16 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #if defined __APPLE__ && defined __MACH__
-#include <GLUT/glut.h>
+ #include <GLUT/glut.h>
 #else
-#include <GL/glut.h>
+ #include <GL/glut.h>
 #endif // __APPLE__ && __MACH__
 #include "logger.h"
 
 #define PERSPECTIVE_ENABLED 1
 
 #ifndef M_PI
-#define M_PI 3.14159265358979323846
+ #define M_PI 3.14159265358979323846
 #endif // M_PI
 
 typedef struct

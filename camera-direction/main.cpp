@@ -2,8 +2,6 @@
 #include <string>
 #include <opencv2/opencv.hpp>
 
-namespace {
-
 /**
  * 射影行列を計算します。
  *
@@ -12,7 +10,7 @@ namespace {
  * @param[in] tvec カメラの並進ベクトル
  * @return 射影行列
  */
-cv::Mat calculateProjectionMatrix(cv::Mat& intrinsic, cv::Mat& rvec, cv::Mat& tvec) {
+static cv::Mat calculateProjectionMatrix(cv::Mat& intrinsic, cv::Mat& rvec, cv::Mat& tvec) {
 //
 // 世界座標系 -> 画像座標系
 // s*p = A*[R|t]*P
@@ -45,7 +43,7 @@ cv::Mat calculateProjectionMatrix(cv::Mat& intrinsic, cv::Mat& rvec, cv::Mat& tv
  * @param[out] distortion 歪み係数ベクトル
  * @return 読み込めた場合はtrue、そうでなければfalse
  */
-bool readCameraParameters(const std::string& filename,
+static bool readCameraParameters(const std::string& filename,
         cv::Mat& intrinsic, cv::Mat& distortion) {
     cv::FileStorage fs(filename, cv::FileStorage::READ);
     if (!fs.isOpened()) {
@@ -66,7 +64,7 @@ bool readCameraParameters(const std::string& filename,
  * @param[in] tvec カメラの並進ベクトル
  * @return 読み込めた場合はtrue、そうでなければfalse
  */
-bool readCameraPosition(const std::string& filename,
+static bool readCameraPosition(const std::string& filename,
         cv::Mat& rvec, cv::Mat& tvec) {
     cv::FileStorage fs(filename, cv::FileStorage::READ);
     if (!fs.isOpened()) {
@@ -78,8 +76,6 @@ bool readCameraPosition(const std::string& filename,
     fs.release();
     return rvec.total() != 0 && tvec.total() != 0;
 }
-
-} // unnamed namespace
 
 int main(int argc, char* argv[]) {
     if (argc <= 2) {

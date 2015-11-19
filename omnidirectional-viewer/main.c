@@ -4,14 +4,14 @@
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
 #if defined __APPLE__ && defined __MACH__
-#include <GLUT/glut.h>
+ #include <GLUT/glut.h>
 #else
-#include <GL/glut.h>
+ #include <GL/glut.h>
 #endif // __APPLE__ && __MACH__
 #include "loader.h"
 
 #ifndef M_PI
-#define M_PI 3.14159265358979323846
+ #define M_PI 3.14159265358979323846
 #endif // M_PI
 
 static const unsigned int kTimerPeriod = 100; // [ms]

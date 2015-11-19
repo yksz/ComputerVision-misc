@@ -4,11 +4,11 @@
 #include <stdio.h>
 
 #ifdef _WIN32
-#include <string.h>
-#define __FILENAME__ (strrchr(__FILE__, '\\') ? strrchr(__FILE__, '\\') + 1 : __FILE__)
-#define __func__ __FUNCTION__
+ #include <string.h>
+ #define __FILENAME__ (strrchr(__FILE__, '\\') ? strrchr(__FILE__, '\\') + 1 : __FILE__)
+ #define __func__ __FUNCTION__
 #else
-#define __FILENAME__ __FILE__
+ #define __FILENAME__ __FILE__
 #endif
 
 #define LOG_DEBUG(fmt, ...) logger_log(LogLevel_DEBUG, stderr, __FILENAME__, __LINE__, __func__, fmt, ## __VA_ARGS__)

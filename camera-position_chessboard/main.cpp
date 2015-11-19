@@ -3,8 +3,6 @@
 #include <vector>
 #include <opencv2/opencv.hpp>
 
-namespace {
-
 static const int kChessPatternRows = 7;
 static const int kChessPatternColumns = 10;
 static const int kChessGridSize = 24; // [mm]
@@ -14,7 +12,7 @@ static const int kChessGridSize = 24; // [mm]
  *
  * @param[out] objectPoints 物体上の点
  */
-void readObjectPointsOnChessboard(std::vector<cv::Point3f>& objectPoints) {
+static void readObjectPointsOnChessboard(std::vector<cv::Point3f>& objectPoints) {
     for (int i = 0; i < kChessPatternRows; i++) {
         for (int j = 0; j < kChessPatternColumns; j++) {
             cv::Point3f point;
@@ -34,7 +32,7 @@ void readObjectPointsOnChessboard(std::vector<cv::Point3f>& objectPoints) {
  * @param[out] corners チェスボードの交点位置
  * @return 求めることができた場合はtrue、そうでなければfalse
  */
-bool findChessboardCorners(cv::Mat& image, cv::Size& patternSize,
+static bool findChessboardCorners(cv::Mat& image, cv::Size& patternSize,
         std::vector<cv::Point2f>& corners) {
     bool found = cv::findChessboardCorners(image, patternSize, corners);
     if (!found) {
@@ -57,7 +55,7 @@ bool findChessboardCorners(cv::Mat& image, cv::Size& patternSize,
  * @param[out] imagePoints 画像上の対応点
  * @return 読み込めた場合はtrue、そうでなければfalse
  */
-bool readImagePointsOnChessboard(const std::string& filename,
+static bool readImagePointsOnChessboard(const std::string& filename,
         std::vector<cv::Point2f>& imagePoints) {
     // チェスボードの交点を検出する
     cv::Mat image = cv::imread(filename);
@@ -89,7 +87,7 @@ bool readImagePointsOnChessboard(const std::string& filename,
  * @param[out] distortion 歪み係数ベクトル
  * @return 読み込めた場合はtrue、そうでなければfalse
  */
-bool readCameraParameters(const std::string& filename,
+static bool readCameraParameters(const std::string& filename,
         cv::Mat& intrinsic, cv::Mat& distortion) {
     cv::FileStorage fs(filename, cv::FileStorage::READ);
     if (!fs.isOpened()) {
@@ -111,7 +109,7 @@ bool readCameraParameters(const std::string& filename,
  * @param[out] tvec カメラの並進ベクトル
  * @return 推定できた場合はtrue、そうでなければfalse
  */
-bool estimateCameraPosition(const std::string& imageFileName,
+static bool estimateCameraPosition(const std::string& imageFileName,
         const std::string& cameraParamsFileName,
         cv::Mat& rvec, cv::Mat& tvec) {
     std::vector<cv::Point3f> objectPoints;
@@ -141,7 +139,7 @@ bool estimateCameraPosition(const std::string& imageFileName,
  * @param[in] tvec カメラの並進ベクトル
  * @return 書き込めた場合はtrue、そうでなければfalse
  */
-bool writeCameraPosition(const std::string& filename,
+static bool writeCameraPosition(const std::string& filename,
         cv::Mat& rvec, cv::Mat& tvec) {
     cv::FileStorage fs(filename, cv::FileStorage::WRITE);
     if (!fs.isOpened()) {
@@ -152,8 +150,6 @@ bool writeCameraPosition(const std::string& filename,
     fs << "translation" << tvec;
     return true;
 }
-
-} // unnamed namespace
 
 int main(int argc, char** argv) {
     if (argc <= 2) {
