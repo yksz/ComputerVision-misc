@@ -10,7 +10,8 @@
  * @param[in] tvec カメラの並進ベクトル
  * @return 射影行列
  */
-static cv::Mat calculateProjectionMatrix(cv::Mat& intrinsic, cv::Mat& rvec, cv::Mat& tvec) {
+static cv::Mat calculateProjectionMatrix(const cv::Mat& intrinsic,
+        const cv::Mat& rvec, const cv::Mat& tvec) {
 //
 // 世界座標系 -> 画像座標系
 // s*p = A*[R|t]*P
@@ -60,8 +61,8 @@ static bool readCameraParameters(const std::string& filename,
  * ファイルからカメラ位置を読み込みます。
  *
  * @param[in] filename ファイル名
- * @param[in] rvec カメラの回転ベクトル
- * @param[in] tvec カメラの並進ベクトル
+ * @param[out] rvec カメラの回転ベクトル
+ * @param[out] tvec カメラの並進ベクトル
  * @return 読み込めた場合はtrue、そうでなければfalse
  */
 static bool readCameraPosition(const std::string& filename,

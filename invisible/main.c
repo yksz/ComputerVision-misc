@@ -43,7 +43,7 @@ static IplImage* detectSkinColor(IplImage* src)
     return mask;
 }
 
-static IplImage* renderInvisible(IplImage* src, IplImage* bg)
+static IplImage* renderInvisible(const IplImage* src, const IplImage* bg)
 {
     assert(src != NULL || bg != NULL);
 

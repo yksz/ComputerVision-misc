@@ -10,7 +10,8 @@ static cv::Mat s_shownImage;
 static std::size_t s_maxClickedCount = 0;
 static std::vector<cv::Point2f>* s_clickedPoints = NULL;
 
-static void drawCross(cv::Mat& image, cv::Point2f& point, const cv::Scalar& color, int length, int thickness = 1) {
+static void drawCross(cv::Mat& image, const cv::Point2f& point, const cv::Scalar& color,
+        int length, int thickness = 1) {
     cv::line(image, cv::Point2f(point.x - length, point.y), cv::Point2f(point.x + length, point.y), color, thickness);
     cv::line(image, cv::Point2f(point.x, point.y - length), cv::Point2f(point.x, point.y + length), color, thickness);
 }
@@ -115,11 +116,12 @@ static bool readCameraParameters(const std::string& filename,
  * @param[in] points 手動で入力した画像上の対応点
  * @param[in] reprojectedPoints 再投影した画像上の対応点
  */
-static void evaluateImagePoints(std::vector<cv::Point2f>& points, std::vector<cv::Point2f>& reprojectedPoints) {
-    for (std::vector<cv::Point2f>::iterator it = points.begin(); it != points.end(); it++) {
+static void evaluateImagePoints(const std::vector<cv::Point2f>& points,
+        const std::vector<cv::Point2f>& reprojectedPoints) {
+    for (std::vector<cv::Point2f>::const_iterator it = points.begin(); it != points.end(); it++) {
         drawCross(s_shownImage, *it, cv::Scalar(0, 0, 255), 7, 2);
     }
-    for (std::vector<cv::Point2f>::iterator it = reprojectedPoints.begin(); it != reprojectedPoints.end(); it++) {
+    for (std::vector<cv::Point2f>::const_iterator it = reprojectedPoints.begin(); it != reprojectedPoints.end(); it++) {
         drawCross(s_shownImage, *it, cv::Scalar(255, 0, 0), 7, 2);
     }
     cv::imshow(s_shownWindowName, s_shownImage);
@@ -179,7 +181,7 @@ static bool estimateCameraPosition(const std::string& objectPointsFileName,
  * @return 書き込めた場合はtrue、そうでなければfalse
  */
 static bool writeCameraPosition(const std::string& filename,
-        cv::Mat& rvec, cv::Mat& tvec) {
+        const cv::Mat& rvec, const cv::Mat& tvec) {
     cv::FileStorage fs(filename, cv::FileStorage::WRITE);
     if (!fs.isOpened()) {
         std::cerr << "ERROR: Failed to open file: " << filename << std::endl;

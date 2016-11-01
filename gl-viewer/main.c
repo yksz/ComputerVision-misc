@@ -64,14 +64,14 @@ static Material s_material = {
 };
 static MouseButton s_leftButton, s_rightButton;
 
-static void setViewpoint(Viewpoint* v)
+static void setViewpoint(const Viewpoint* v)
 {
     gluLookAt(v->ex, v->ey, v->ez,
               v->cx, v->cy, v->cz,
               v->ux, v->uy, v->uz);
 }
 
-static void setLight0(Light* l)
+static void setLight0(const Light* l)
 {
     glLightfv(GL_LIGHT0, GL_POSITION,       l->position);
     glLightfv(GL_LIGHT0, GL_AMBIENT,        l->ambient);
@@ -80,7 +80,7 @@ static void setLight0(Light* l)
     glLightfv(GL_LIGHT0, GL_SPOT_DIRECTION, l->direction);
 }
 
-static void setMaterial(Material* m)
+static void setMaterial(const Material* m)
 {
     glMaterialfv(GL_FRONT, GL_AMBIENT,   m->ambient);
     glMaterialfv(GL_FRONT, GL_DIFFUSE,   m->diffuse);

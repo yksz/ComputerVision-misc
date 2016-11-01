@@ -32,7 +32,7 @@ static void readObjectPointsOnChessboard(std::vector<cv::Point3f>& objectPoints)
  * @param[out] corners チェスボードの交点位置
  * @return 求めることができた場合はtrue、そうでなければfalse
  */
-static bool findChessboardCorners(cv::Mat& image, cv::Size& patternSize,
+static bool findChessboardCorners(const cv::Mat& image, const cv::Size& patternSize,
         std::vector<cv::Point2f>& corners) {
     bool found = cv::findChessboardCorners(image, patternSize, corners);
     if (!found) {
@@ -140,7 +140,7 @@ static bool estimateCameraPosition(const std::string& imageFileName,
  * @return 書き込めた場合はtrue、そうでなければfalse
  */
 static bool writeCameraPosition(const std::string& filename,
-        cv::Mat& rvec, cv::Mat& tvec) {
+        const cv::Mat& rvec, const cv::Mat& tvec) {
     cv::FileStorage fs(filename, cv::FileStorage::WRITE);
     if (!fs.isOpened()) {
         std::cerr << "ERROR: Failed to open file: " << filename << std::endl;
