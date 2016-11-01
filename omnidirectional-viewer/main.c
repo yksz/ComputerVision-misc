@@ -39,7 +39,7 @@ static MouseButton leftButton;
 static GLuint displayList;
 static GLuint texture;
 
-static void setViewpoint(Viewpoint* v)
+static void setViewpoint(const Viewpoint* v)
 {
     gluLookAt(v->ex, v->ey, v->ez,
               v->cx, v->cy, v->cz,
@@ -81,7 +81,7 @@ static void setUpView(int width, int height)
                    100.0); // 後方クリップ面と視点間の距離
 }
 
-static void updateTexture(IplImage* img, bool mipmap)
+static void updateTexture(const IplImage* img, bool mipmap)
 {
     if (mipmap) { // Mipmapの場合は画像サイズの制限はない
         gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGB, img->width, img->height,
@@ -227,7 +227,7 @@ static void init(void)
 static void onExit(void)
 {
     glDeleteTextures(1, &texture);
-    Loader_free();
+    Loader_finalize();
 }
 
 int main(int argc, char** argv)
@@ -237,7 +237,7 @@ int main(int argc, char** argv)
         return 1;
     }
     const char* dirname = argv[argc - 1];
-    Loader_init(dirname);
+    Loader_initialize(dirname);
 
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH);

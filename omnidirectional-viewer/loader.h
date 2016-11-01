@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <opencv/cv.h>
 
-bool Loader_init(const char* dir);
+bool Loader_initialize(const char* dir);
 void Loader_finalize(void);
 IplImage* Loader_loadImage(void);
 

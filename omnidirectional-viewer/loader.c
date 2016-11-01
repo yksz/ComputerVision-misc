@@ -23,7 +23,7 @@ static int filter(const struct dirent* file)
     return 1;
 }
 
-bool Loader_init(const char* dir)
+bool Loader_initialize(const char* dir)
 {
     assert(dir != NULL);
 
